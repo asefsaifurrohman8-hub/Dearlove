@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>DEAR LOVE System + AI</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <!-- Libraries -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <!-- Marked for Markdown parsing in Chat -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        :root {
+            /* Color Palette Premium */
+            --bg-body: #F3F4F6;
+            --primary-blue: #0F172A; /* Darker Blue for elegance */
+            --accent-blue: #2563EB; /* Bright Blue for actions */
+            --card-gradient: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
+            --ai-gradient: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%); /* New AI Color */
+            --text-main: #1F2937;
+            --text-sub: #6B7280;
+            --white: #FFFFFF;
+            
+            --safe-top: env(safe-area-inset-top, 20px);
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            margin: 0; font-family: 'DM Sans', sans-serif; 
+            background: var(--bg-body); color: var(--text-main);
+            height: 100vh; overflow: hidden;
+        }
+
+        /* --- SYSTEM SCREENS --- */
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-body); display: none; flex-direction: column;
+            z-index: 1;
+        }
+        .screen.active { display: flex; animation: fadeIn 0.3s; }
+        
+        .scroll-content {
+            flex: 1; overflow-y: auto; padding: 20px;
+            padding-bottom: calc(100px + var(--safe-bottom)); 
+            scrollbar-width: none; /* Hide scrollbar */
+        }
+        .scroll-content::-webkit-scrollbar { display: none; }
+
+        /* --- 1. MENU UTAMA (PILIHAN) --- */
+        #menuScreen { justify-content: center; align-items: center; padding: 30px; }
+        .menu-logo { width: 80px; margin-bottom: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .menu-card {
+            background: white; width: 100%; max-width: 320px; padding: 20px;
+            border-radius: 20px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.03); cursor: pointer; border: 1px solid #eee;
+            transition: transform 0.1s;
+        }
+        .menu-card:active { transform: scale(0.98); background: #f9fafb; }
+        .icon-box { 
+            width: 50px; height: 50px; border-radius: 14px; 
+            display: flex; align-items: center; justify-content: center; font-size: 24px; 
+        }
+
+        /* --- 2. LOGIN ADMIN --- */
+        #loginScreen { justify-content: center; padding: 30px; background: var(--bg-body); }
+        .input-group {
+            background: white; display: flex; align-items: center; padding: 5px 15px;
+            border-radius: 15px; border: 1px solid #e5e7eb; margin-bottom: 15px;
+        }
+        .input-group span { color: var(--text-sub); margin-right: 10px; }
+        .clean-input {
+            width: 100%; padding: 12px 0; border: none; outline: none; 
+            font-size: 15px; font-family: 'DM Sans'; color: var(--text-main);
+        }
+        .btn-black { 
+            width: 100%; padding: 16px; border-radius: 16px; border: none; 
+            background: var(--primary-blue); color: white; font-weight: 700; font-size: 15px; 
+            cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        /* --- 3. DASHBOARD ADMIN (HEADER & CARD) --- */
+        /* Header */
+        .top-nav {
+            background: var(--card-gradient); /* sama dengan main-card */
+            padding: calc(var(--safe-top) + 20px) 24px 10px 24px;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+        }
+
+        .admin-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+        }
+        .profile-btn { 
+            width: 50px; height: 50px; border-radius: 50px; background: white; 
+            display: flex; align-items: center; justify-content: center; overflow:hidden; cursor: pointer;
+            border:4px solid white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.10);
+        }
+
+        /* Kartu Biru (Fixed Layout) */
+        .main-card {
+            background: var(--card-gradient); color: var(--white);
+            border-radius: 28px; padding: 30px 25px; position: relative;
+            box-shadow: 0 15px 40px rgba(37, 99, 235, 0.3); margin-bottom: 25px;
+        }
+        .ai-card {
+            background: var(--ai-gradient); color: var(--white);
+            border-radius: 20px; padding: 20px; position: relative;
+            box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3); margin-bottom: 25px;
+            overflow: hidden;
+        }
+        .ai-card::before {
+            content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            animation: rotate 10s linear infinite;
+        }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .card-label { font-size: 12px; opacity: 0.8; font-weight: 500; margin-bottom: 5px; letter-spacing: 0.5px; position: relative; z-index: 1;}
+        .card-value { font-size: 36px; font-weight: 700; letter-spacing: -1px; margin-bottom: 2px; position: relative; z-index: 1;}
+        .card-sub { font-size: 13px; font-weight: 500; opacity: 0.9; display: flex; align-items: center; gap: 5px; position: relative; z-index: 1;}
+        
+        /* Grafik (Di Bawah Kartu) */
+        .chart-section { margin-bottom: 25px; }
+        .chart-header { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: 700; font-size: 15px; padding: 0 5px; }
+        .chart-container {
+            background: white; padding: 20px; border-radius: 24px; height: 180px; 
+            display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; 
+            box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+        }
+        .bar { background: #EFF6FF; width: 100%; border-radius: 6px 6px 0 0; position: relative; transition: height 0.5s; }
+        .bar.today { background: var(--accent-blue); }
+        .bar-val { position: absolute; top: -20px; width: 100%; text-align: center; font-size: 9px; color: var(--text-sub); font-weight: 700; }
+
+        /* --- 4. LIST RIWAYAT --- */
+        .section-title { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 15px; padding: 0 5px; }
+        .trans-item {
+            background: var(--white); border-radius: 20px; padding: 18px; margin-bottom: 10px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid #f3f4f6;
+        }
+        .ti-icon { 
+            width: 45px; height: 45px; background: #F3F4F6; border-radius: 14px; 
+            display: flex; align-items: center; justify-content: center; color: var(--text-main); margin-right: 15px; 
+        }
+        
+        /* --- 5. NAVIGASI BAWAH --- */
+        .bottom-nav {
+            position: fixed; bottom: calc(30px + var(--safe-bottom)); left: 20px; right: 20px;
+            background: var(--white); padding: 12px 30px; border-radius: 30px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1); z-index: 99;
+        }
+        .nav-btn { text-align: center; color: #9CA3AF; cursor: pointer; flex: 1; transition: 0.2s; }
+        .nav-btn.active { color: var(--accent-blue); transform: translateY(-2px); }
+        .nav-btn span { display: block; font-size: 26px; }
+        
+        /* --- 6. MODE PUBLIK & FORM --- */
+        .form-label { font-size: 11px; color: var(--text-sub); font-weight: 700; text-transform: uppercase; margin-bottom: 8px; display: block; margin-left: 5px; }
+        .card-input-group {
+            background: white; padding: 20px; border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.03); margin-bottom: 20px;
+        }
+        
+        /* Input Harga & Nominal */
+        .big-input { width: 100%; border: none; font-size: 32px; font-weight: bold; color: var(--accent-blue); outline: none; background: transparent; }
+        
+        /* Struk Preview */
+        .receipt-view {
+            background: white; padding: 25px 20px; border: 1px solid #ddd; font-family: 'Share Tech Mono', monospace;
+            font-size: 12px; text-align: center; margin: 15px 0; position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+        .receipt-view::before {
+            content: ""; position: absolute; top: -5px; left: 0; width: 100%; height: 10px; 
+            background: radial-gradient(circle, transparent 5px, white 5px) repeat-x; background-size: 10px 10px;
+        }
+        .r-row { display: flex; justify-content: space-between; margin: 4px 0; }
+        .r-line { border-bottom: 1px dashed #bbb; margin: 12px 0; }
+        
+        /* UTILS */
+        .btn-action { flex:1; padding: 15px; border-radius: 15px; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        
+        #inputModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; display: none; justify-content: center; align-items: flex-end; }
+        .modal-sheet { background: #F9FAFB; width: 100%; border-radius: 30px 30px 0 0; padding: 30px 25px 40px 25px; animation: slideUp 0.3s; max-height: 90vh; overflow-y: auto; }
+
+        /* AI Chat Floating Button */
+        .fab-ai {
+            position: fixed; bottom: 110px; right: 20px; width: 55px; height: 55px;
+            background: var(--ai-gradient); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; box-shadow: 0 5px 20px rgba(124, 58, 237, 0.4);
+            cursor: pointer; z-index: 100; animation: bounce 2s infinite;
+        }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateY(0);} 40% {transform: translateY(-6px);} 60% {transform: translateY(-3px);} }
+
+        /* AI Chat Modal */
+        #aiModal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.6); z-index: 300; display: none; 
+            justify-content: center; align-items: center;
+        }
+        .ai-chat-box {
+            width: 90%; max-width: 400px; height: 70vh; background: white; 
+            border-radius: 20px; display: flex; flex-direction: column; overflow: hidden;
+            animation: fadeIn 0.3s;
+        }
+        .ai-header {
+            padding: 15px; background: var(--ai-gradient); color: white; 
+            display: flex; justify-content: space-between; align-items: center;
+            font-weight: bold;
+        }
+        .ai-messages {
+            flex: 1; padding: 15px; overflow-y: auto; background: #F9FAFB;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .msg-bubble {
+            max-width: 80%; padding: 10px 14px; border-radius: 15px; font-size: 13px; line-height: 1.4;
+        }
+        .msg-ai { background: white; align-self: flex-start; border-radius: 0 15px 15px 15px; border: 1px solid #eee; }
+        .msg-user { background: #E0E7FF; color: var(--primary-blue); align-self: flex-end; border-radius: 15px 0 15px 15px; }
+        .ai-input-area {
+            padding: 10px; border-top: 1px solid #eee; display: flex; gap: 10px; background: white;
+        }
+        .typing-dots { font-size: 10px; color: #888; font-style: italic; margin-left: 5px; display: none;}
+
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @media print { body * { visibility: hidden; } #receiptArea, #receiptArea * { visibility: visible; } #adminReceiptArea, #adminReceiptArea * { visibility: visible; } #receiptArea, #adminReceiptArea { position: absolute; left: 0; top: 0; width: 58mm; margin: 0; padding: 0; box-shadow: none; border: none; } }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. MENU UTAMA -->
+    <div id="menuScreen" class="screen active">
+        <div style="width: 100%; max-width: 320px; margin: auto; text-align: center;">
+            <img src="logo.png" style="width:90px; border-radius:22px; margin-bottom:30px; box-shadow:0 10px 25px rgba(0,0,0,0.1);" onerror="this.style.display='none'">
+            <h1 style="color:var(--primary-blue); margin:0; font-size:28px;">DEAR LOVE</h1>
+            <p style="color:var(--text-sub); font-size:13px; margin-bottom:50px;">Sistem Manajemen Digital + AI</p>
+            
+            <div onclick="nav('publicScreen')" class="menu-card">
+                <div class="icon-box" style="background:#E0F2FE; color:#0284C7;"><span class="material-icons-round">storefront</span></div>
+                <div style="text-align:left;"><div style="font-weight:700;">Mode Publik</div><div style="font-size:12px;color:#666;">Kasir Umum</div></div>
+            </div>
+
+            <div onclick="checkLogin()" class="menu-card">
+                <div class="icon-box" style="background:#DCFCE7; color:#16A34A;"><span class="material-icons-round">verified_user</span></div>
+                <div style="text-align:left;"><div style="font-weight:700;">Mode Saya</div><div style="font-size:12px;color:#666;">Admin Owner</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. LOGIN -->
+    <div id="loginScreen" class="screen">
+        <div style="display:flex; flex-direction:column; justify-content:center; height:100%; padding:30px;">
+            <div style="margin-bottom:30px;">
+                <div onclick="nav('menuScreen')" style="display:inline-flex; align-items:center; gap:5px; color:var(--text-sub); cursor:pointer;"><span class="material-icons-round">arrow_back</span> Kembali</div>
+            </div>
+            <h2 style="font-size:28px; margin-bottom:10px;">Selamat Datang</h2>
+            <p style="color:var(--text-sub); margin-bottom:40px;">Masukkan kata sandi untuk akses admin.</p>
+            
+            <div class="input-group">
+                <span class="material-icons-round">lock</span>
+                <input type="password" id="passInput" class="clean-input" placeholder="Kata Sandi...">
+            </div>
+            
+            <button class="btn-black" onclick="doLogin()">Masuk Dashboard</button>
+            <div style="margin-top:20px; text-align:center; font-size:13px; color:var(--accent-blue); cursor:pointer;" onclick="forgotPass()">Lupa Kata Sandi?</div>
+        </div>
+    </div>
+
+    <!-- 3. MODE PUBLIK -->
+    <div id="publicScreen" class="screen">
+        <div style="padding:calc(var(--safe-top) + 20px) 24px 10px; display:flex; justify-content:space-between; align-items:center;">
+            <div onclick="nav('menuScreen')" style="cursor:pointer;"><span class="material-icons-round">arrow_back</span></div>
+            <div style="font-weight:700;">MODE PUBLIK</div>
+            <div style="width:24px"></div>
+        </div>
+        
+        <div class="scroll-content">
+            <span class="form-label">IDENTITAS STRUK (BISA DIEDIT)</span>
+            <div class="card-input-group">
+                <div class="input-group">
+                    <span class="material-icons-round">store</span>
+                    <input type="text" id="pubName" class="clean-input" placeholder="Nama Toko" oninput="updRec('pub')">
+                </div>
+                <div class="input-group">
+                    <span class="material-icons-round">place</span>
+                    <input type="text" id="pubAddr" class="clean-input" placeholder="Alamat Lengkap" oninput="updRec('pub')">
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                    <span style="font-size:13px; font-weight:600;">Harga / Liter</span>
+                    <div style="background:#f3f4f6; padding:8px 15px; border-radius:10px; display:flex; align-items:center;">
+                        <span style="font-size:12px; margin-right:5px;">Rp</span>
+                        <input type="number" id="pubPrice" value="10000" style="width:70px; border:none; background:transparent; font-weight:bold; text-align:right; outline:none;" oninput="calcPub()">
+                    </div>
+                </div>
+            </div>
+
+            <span class="form-label">TRANSAKSI</span>
+            <div class="card-input-group" style="text-align:center;">
+                <input type="number" id="pubNom" class="big-input" placeholder="0" oninput="calcPub()" style="text-align:center;">
+                <div style="font-size:12px; color:var(--text-sub); margin-top:5px;">Estimasi: <span id="pubLit" style="font-weight:700; color:var(--accent-blue);">0 L</span></div>
+            </div>
+
+            <div id="receiptArea" class="receipt-view">
+                <div style="text-align:center; font-weight:bold; font-size:16px;" id="rName">POM MINI</div>
+                <div style="text-align:center; margin-bottom:10px;" id="rAddr">Indonesia</div>
+                <div class="r-line"></div>
+                <div class="r-row"><span id="rDate">-</span><span id="rTime">-</span></div>
+                <div class="r-line"></div>
+                <div style="font-weight:bold; text-align:left;">PERTALITE</div>
+                <div class="r-row"><span id="rDet">0 L x 10000</span><span id="rTot">0</span></div>
+                <div class="r-line"></div>
+                <div class="r-row" style="font-size:16px; font-weight:bold;"><span>TOTAL</span><span id="rBig">0</span></div>
+                <div style="text-align:center; margin-top:15px;">TERIMA KASIH</div>
+                <div style="text-align:center; font-size:9px; color:#aaa; margin-top:5px;">System by DEAR LOVE</div>
+            </div>
+
+            <div style="display:flex; gap:10px;">
+                <button class="btn-action" style="background:#1F2937; color:white;" onclick="window.print()"><span class="material-icons-round">print</span> Print</button>
+                <button class="btn-action" style="background:#10B981; color:white;" onclick="wa('pub')"><span class="material-icons-round">share</span> WA</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. ADMIN DASHBOARD -->
+    <div id="adminScreen" class="screen">
+        <div class="top-nav">
+            <div>
+                <div style="font-size:25px; font-weight:600;" id="dispAdminName" class="admin-name">DEAR LOVE</div>
+            </div>
+            <img id="dispPhoto" src="logo.png" onerror="this.src='https://via.placeholder.com/50'" style="width:50px;height:50px;object-fit:cover;border-radius:50%;">
+        </div>
+
+        <div class="scroll-content">
+            
+            <!-- TAB 1: HOME -->
+            <div id="tabHome" class="tab-content active">
+                <!-- AI INSIGHT CARD (New) -->
+                <div class="ai-card" id="aiInsightBox">
+                    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <span class="card-label" style="color:white; opacity:0.9;"><span class="material-icons-round" style="font-size:14px; vertical-align:middle;">auto_awesome</span> ANALISIS AI</span>
+                        <span style="font-size:10px; background:rgba(255,255,255,0.2); padding:3px 8px; border-radius:10px;">Groq Powered</span>
+                    </div>
+                    <div id="aiText" style="font-size:14px; line-height:1.5; font-weight:500; position:relative; z-index:1;">
+                        Klik tombol untuk analisa penjualan hari ini...
+                    </div>
+                    <button onclick="generateInsight()" style="margin-top:15px; background:white; color:#7C3AED; border:none; padding:8px 15px; border-radius:20px; font-weight:bold; font-size:12px; cursor:pointer; position:relative; z-index:1;">Analisa Sekarang</button>
+                </div>
+
+                <!-- KARTU BIRU -->
+                <div class="main-card">
+                    <div class="card-header">
+                        <span class="card-label">Pendapatan Hari Ini</span>
+                        <span style="background:rgba(255,255,255,0.2); padding:4px 10px; border-radius:20px; font-size:10px; font-weight:700;">LIVE</span>
+                    </div>
+                    <div class="card-value" id="dailyInc">Rp 0</div>
+                    <div class="card-sub"><span class="material-icons-round" style="font-size:16px;">local_gas_station</span> <span id="dailyLit">0 Liter</span></div>
+                </div>
+
+                <!-- GRAFIK -->
+                <div class="chart-section">
+                    <div class="chart-header">
+                        <span>Grafik 7 Hari</span>
+                        <span style="color:var(--accent-blue);" id="weekTotal">Rp 0</span>
+                    </div>
+                    <div class="chart-container" id="chartBox"></div>
+                </div>
+
+                <!-- RIWAYAT -->
+                <div class="section-title" style="display:flex; justify-content:space-between;">
+                    <span>Transaksi Terakhir</span>
+                    <span style="font-size:12px; color:var(--accent-blue); cursor:pointer;" onclick="switchTab('tabHist')">Lihat Semua</span>
+                </div>
+                <div id="recentList"></div>
+            </div>
+
+            <!-- TAB 2: RIWAYAT LENGKAP -->
+            <div id="tabHist" class="tab-content">
+                <h2 style="margin-bottom:20px;">Riwayat Lengkap</h2>
+                <div id="fullHistory"></div>
+                <button class="btn-black" style="background:#fee2e2; color:#ef4444; margin-top:20px;" onclick="clearData()">Hapus Semua Data</button>
+            </div>
+
+            <!-- TAB 3: LAPORAN BULANAN -->
+            <div id="tabRep" class="tab-content">
+                <h2 style="margin-bottom:20px;">Laporan Bulanan</h2>
+                <div class="card-input-group" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>Total Bulan Ini</div>
+                    <div style="font-size:20px; font-weight:700; color:var(--primary-blue);" id="monthTotal">Rp 0</div>
+                </div>
+                <div id="monthList"></div>
+            </div>
+
+            <!-- TAB 4: SETTING -->
+            <div id="tabSet" class="tab-content">
+                <h2 style="margin-bottom:20px;">Pengaturan</h2>
+                <div style="text-align:center; margin-bottom:30px;">
+                    <img id="settingPhoto" src="logo.png" style="width:90px; height:90px; border-radius:50%; object-fit:cover; border:4px solid white; box-shadow:0 5px 15px rgba(0,0,0,0.1);">
+                    <input type="file" id="uploadPhoto" onchange="updatePhoto(event)" style="display:block; margin:15px auto; font-size:12px;">
+                </div>
+
+                <span class="form-label">DATA TOKO</span>
+                <div class="input-group"><span class="material-icons-round">store</span><input type="text" id="setStore" class="clean-input" placeholder="Nama Toko"></div>
+                <div class="input-group"><span class="material-icons-round">place</span><input type="text" id="setAddr" class="clean-input" placeholder="Alamat"></div>
+                <div class="input-group"><span class="material-icons-round">payments</span><input type="number" id="setPrice" class="clean-input" placeholder="Harga"></div>
+                
+                <span class="form-label" style="margin-top:20px;">AKUN ADMIN</span>
+                <div class="input-group"><span class="material-icons-round">person</span><input type="text" id="setAdmin" class="clean-input" placeholder="Nama Admin"></div>
+                <div class="input-group"><span class="material-icons-round">lock</span><input type="password" id="setPass" class="clean-input" placeholder="Password Baru"></div>
+                
+                <!-- NEW AI SETTING -->
+                <span class="form-label" style="margin-top:20px;">AI INTELLIGENCE (GROQ)</span>
+                <div class="input-group"><span class="material-icons-round">key</span><input type="text" id="setGroqKey" class="clean-input" placeholder="Masukkan API Key Groq"></div>
+                <div style="font-size:10px; color:#666; margin-bottom:15px;">Dapatkan API Key gratis di console.groq.com</div>
+
+                <button class="btn-black" onclick="saveSet()">Simpan Perubahan</button>
+            </div>
+        </div>
+
+        <!-- FLOAT BTN AI -->
+        <div class="fab-ai" onclick="openAIChat()">
+            <span class="material-icons-round">smart_toy</span>
+        </div>
+
+        <!-- NAV BOTTOM -->
+        <div class="bottom-nav">
+            <div class="nav-btn active" onclick="switchTab('tabHome', this)"><span class="material-icons-round">home</span></div>
+            <div class="nav-btn" onclick="switchTab('tabHist', this)"><span class="material-icons-round">receipt_long</span></div>
+            <div class="nav-btn" onclick="openInputModal()" style="margin-top:-25px;"><div style="width:55px; height:55px; background:var(--primary-blue); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; box-shadow:0 10px 25px rgba(0,71,171,0.3);"><span class="material-icons-round" style="font-size:28px;">add</span></div></div>
+            <div class="nav-btn" onclick="switchTab('tabRep', this)"><span class="material-icons-round">pie_chart</span></div>
+            <div class="nav-btn" onclick="switchTab('tabSet', this)"><span class="material-icons-round">settings</span></div>
+        </div>
+    </div>
+
+    <!-- MODAL INPUT (ADMIN) -->
+    <div id="inputModal">
+        <div class="modal-sheet">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h3>Input Jual</h3>
+                <span class="material-icons-round" onclick="closeModal()" style="cursor:pointer;">close</span>
+            </div>
+            <div class="card-input-group" style="text-align:center;">
+                <input type="number" id="admNom" style="width:100%; border:none; background:transparent; font-size:36px; font-weight:700; text-align:center; outline:none; color:var(--primary-blue);" placeholder="0" oninput="calcAdm()">
+                <div style="font-size:13px; color:#666; margin-top:5px;">Estimasi: <span id="admLit">0 L</span></div>
+            </div>
+            
+            <!-- Struk Admin Hidden -->
+            <div id="adminReceiptArea" class="receipt-view" style="display:none;">
+                <h3 id="arName" style="margin:0;">MY STORE</h3>
+                <p>----------------</p><p id="arDate"></p><p id="arDet"></p><h3 id="arTot"></h3><p>TERIMA KASIH</p>
+            </div>
+
+            <button class="btn-black" onclick="saveAdm()" style="background:var(--primary-blue);">Simpan & Kirim</button>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button class="btn-action" style="background:#1F2937; color:white;" onclick="printAdm()"><span class="material-icons-round">print</span></button>
+                <button class="btn-action" style="background:#25D366; color:white;" onclick="wa('adm')"><span class="material-icons-round">share</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL AI CHAT -->
+    <div id="aiModal">
+        <div class="ai-chat-box">
+            <div class="ai-header">
+                <span><span class="material-icons-round" style="font-size:16px; margin-right:5px; vertical-align:middle;">psychology</span> Asisten Toko</span>
+                <span class="material-icons-round" onclick="document.getElementById('aiModal').style.display='none'" style="cursor:pointer;">close</span>
+            </div>
+            <div class="ai-messages" id="chatBox">
+                <div class="msg-bubble msg-ai">Halo! Saya asisten AI untuk toko Anda. Tanyakan tentang penjualan, prediksi, atau tips bisnis.</div>
+            </div>
+            <div class="typing-dots" id="typingDots">Sedang mengetik...</div>
+            <div class="ai-input-area">
+                <input type="text" id="aiInput" class="clean-input" placeholder="Tanya sesuatu..." style="padding:10px;">
+                <button onclick="sendAIChat()" style="background:var(--accent-blue); color:white; border:none; border-radius:10px; width:40px; cursor:pointer;"><span class="material-icons-round">send</span></button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // CONFIG
+        const EMAIL_KEY="xSpKdFWQH1eni9QVG", EMAIL_SVC="Service_j3daxhc", EMAIL_TMP="template_0sph0gy";
+        const firebaseConfig = { apiKey: "AIzaSyBpwNPIYhelOhkPvJsBmKvlZnaH9FVnmM4", authDomain: "pom-mini-50b1e.firebaseapp.com", projectId: "pom-mini-50b1e", storageBucket: "pom-mini-50b1e.firebasestorage.app", messagingSenderId: "77499696502", appId: "1:77499696502:web:8080c37da62a12c9566657", measurementId: "G-KRRHTTGBRF" };
+        
+        let db; try{ firebase.initializeApp(firebaseConfig); db=firebase.firestore(); }catch(e){}
+        emailjs.init(EMAIL_KEY);
+
+        // DATA INIT
+        let data = JSON.parse(localStorage.getItem('dl_data')) || { pass: "DearLove2025", store: "DEAR LOVE", addr: "Jl. Raya", price: 10000, admin: "Admin Owner", photo: "logo.png", groqKey: "", trans: [] };
+
+        // --- GROQ AI LOGIC ---
+        const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+        
+        // Helper: Call Groq API
+        async function callGroq(messages) {
+            if(!data.groqKey) return "API Key Groq belum diatur di Pengaturan.";
+            try {
+                const response = await fetch(GROQ_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${data.groqKey}` },
+                    body: JSON.stringify({
+                        model: "llama3-8b-8192", // Model cepat & ringan
+                        messages: messages,
+                        temperature: 0.7
+                    })
+                });
+                const json = await response.json();
+                if(json.error) return "Error Groq: " + json.error.message;
+                return json.choices[0].message.content;
+            } catch (e) { return "Gagal menghubungi AI. Cek koneksi."; }
+        }
+
+        // Feature 1: AI Insight (Dashboard)
+        window.generateInsight = async () => {
+            const btn = document.querySelector('#aiInsightBox button');
+            const txt = document.getElementById('aiText');
+            btn.innerText = "Menganalisis..."; btn.disabled = true;
+
+            // Prepare Summary Data
+            let today = new Date().toLocaleDateString();
+            let dTrans = data.trans.filter(t=>t.date===today);
+            let dInc = dTrans.reduce((a,b)=>a+b.n,0);
+            let totalHist = data.trans.length;
+            
+            let prompt = `Kamu adalah asisten bisnis Pom Mini. Data hari ini: Penjualan Rp${dInc}, Total transaksi ${dTrans.length}. Total riwayat ${totalHist} transaksi. Berikan analisis singkat 2 kalimat: 1 tentang performa hari ini, 1 saran singkat untuk besok. Gunakan bahasa santai tapi profesional.`;
+
+            let res = await callGroq([{role: "system", content: "Kamu ahli bisnis ritel BBM."}, {role: "user", content: prompt}]);
+            
+            txt.innerText = res;
+            btn.innerText = "Analisa Lagi"; btn.disabled = false;
+        }
+
+        // Feature 2: AI Chat
+        window.openAIChat = () => { document.getElementById('aiModal').style.display='flex'; }
+        
+        window.sendAIChat = async () => {
+            let inp = document.getElementById('aiInput');
+            let msg = inp.value; if(!msg) return;
+            
+            // UI User
+            let box = document.getElementById('chatBox');
+            box.innerHTML += `<div class="msg-bubble msg-user">${msg}</div>`;
+            inp.value = ''; 
+            box.scrollTop = box.scrollHeight;
+            document.getElementById('typingDots').style.display='block';
+
+            // Prepare Context
+            let last7 = data.trans.slice(0, 10).map(t=>`${t.date}: Rp${t.n}`).join(", ");
+            let sysMsg = `Kamu adalah Asisten Pintar Pom Mini. Nama Toko: ${data.store}. Harga BBM: Rp${data.price}/Liter. Data 10 transaksi terakhir: [${last7}]. Jawab pertanyaan user berdasarkan data ini. Jika user tanya hal umum, jawab dengan ramah. Gunakan format Markdown jika perlu.`;
+
+            // Call API
+            let res = await callGroq([{role: "system", content: sysMsg}, {role: "user", content: msg}]);
+            
+            // UI AI
+            document.getElementById('typingDots').style.display='none';
+            // Parse Markdown simple
+            let cleanRes = marked.parse(res);
+            box.innerHTML += `<div class="msg-bubble msg-ai">${cleanRes}</div>`;
+            box.scrollTop = box.scrollHeight;
+        }
+
+
+        // --- EXISTING LOGIC ---
+
+        // NAV
+        window.onload = () => { if(localStorage.getItem('dl_log')==='1') nav('adminScreen'); }
+        window.nav = (id) => {
+            document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(id==='adminScreen') renderDash();
+            if(id==='publicScreen') { document.getElementById('pubName').value="POM MINI"; document.getElementById('pubAddr').value="Indonesia"; updRec('pub'); }
+        }
+        window.switchTab = (tid, el) => {
+            document.querySelectorAll('.tab-content').forEach(t=>t.style.display='none');
+            document.getElementById(tid).style.display='block';
+            document.querySelectorAll('.nav-btn').forEach(n=>n.classList.remove('active'));
+            if(el) el.classList.add('active');
+            if(tid==='tabRep') renderChart();
+        }
+
+        // AUTH
+        window.checkLogin = () => { if(localStorage.getItem('dl_log')==='1') nav('adminScreen'); else nav('loginScreen'); }
+        window.doLogin = () => { if(document.getElementById('passInput').value===data.pass) { localStorage.setItem('dl_log','1'); nav('adminScreen'); } else alert("Salah!"); }
+        window.doLogout = () => { localStorage.removeItem('dl_log'); nav('menuScreen'); }
+        window.forgotPass = () => { emailjs.send(EMAIL_SVC, EMAIL_TMP, { to_email:"asefaja140504@gmail.com", message:data.pass }).then(()=>alert("Cek Email")).catch(()=>alert("Gagal")); }
+
+        // ADMIN
+        window.openInputModal = () => { document.getElementById('inputModal').style.display='flex'; }
+        window.closeModal = () => { document.getElementById('inputModal').style.display='none'; }
+        
+        window.renderDash = () => {
+            document.getElementById('dispAdminName').innerText=data.admin;
+            document.getElementById('dispPhoto').src=data.photo;
+            document.getElementById('settingPhoto').src=data.photo;
+            document.getElementById('setStore').value=data.store;
+            document.getElementById('setAddr').value=data.addr;
+            document.getElementById('setPrice').value=data.price;
+            document.getElementById('setAdmin').value=data.admin;
+            document.getElementById('setGroqKey').value = data.groqKey || ""; // Load Key
+
+            let today = new Date().toLocaleDateString();
+            let dTrans = data.trans.filter(t=>t.date===today);
+            let dInc = dTrans.reduce((a,b)=>a+b.n,0);
+            let dLit = dTrans.reduce((a,b)=>a+parseFloat(b.l),0);
+            
+            document.getElementById('dailyInc').innerText="Rp "+dInc.toLocaleString();
+            document.getElementById('dailyLit').innerText=dLit.toFixed(2)+" L Terjual Hari Ini";
+
+            let html = "";
+            data.trans.slice(0,20).forEach(t=>{
+                html += `<div class="trans-item">
+                    <div class="ti-left">
+                        <div class="ti-icon"><span class="material-icons-round">local_gas_station</span></div>
+                        <div class="ti-info"><h4>Penjualan</h4><p>${t.date} ${t.time} • ${t.l}L</p></div>
+                    </div>
+                    <div class="ti-amount">+Rp ${t.n.toLocaleString()}</div>
+                </div>`;
+            });
+            document.getElementById('recentList').innerHTML = html || "<p style='text-align:center;color:#ccc'>Belum ada data</p>";
+            document.getElementById('fullHistory').innerHTML = html;
+            renderChart();
+        }
+
+        window.calcAdm = () => {
+            let n=parseInt(document.getElementById('admNom').value)||0;
+            let l=(n/data.price).toFixed(2);
+            document.getElementById('admLit').innerText=l+" L";
+            updRec('adm',n,l,data.price);
+        }
+
+        window.saveAdm = async () => {
+            let n = parseInt(document.getElementById('admNom').value);
+            if(!n) return;
+            let l = (n/data.price).toFixed(2);
+            let now = new Date();
+            data.trans.unshift({ id:Date.now(), ts:now.getTime(), date:now.toLocaleDateString(), time:now.toLocaleTimeString(), n:n, l:l });
+            localStorage.setItem('dl_data', JSON.stringify(data));
+            try{ if(db) await db.collection("struk_public").doc("current").set({ nominal:n, liter:l, shop:data.store, address:data.addr, waktu:now.toLocaleString(), timestamp:firebase.firestore.FieldValue.serverTimestamp() }); }catch(e){}
+            document.getElementById('admNom').value=''; closeModal(); renderDash();
+        }
+
+        window.printAdm = () => { let a=document.getElementById('adminReceiptArea'); a.style.display='block'; window.print(); a.style.display='none'; }
+
+        window.renderChart = () => {
+            let daily=[0,0,0,0,0,0,0], wTot=0, now=new Date();
+            data.trans.forEach(t=>{
+                let diff = Math.floor((now - t.ts)/(1000*60*60*24));
+                if(diff<7) { daily[6-diff]+=t.n; wTot+=t.n; }
+            });
+            let max=Math.max(...daily)||1;
+            document.getElementById('chartBox').innerHTML = daily.map((v,i)=>`<div class="bar ${i===6?'today':''}" style="height:${(v/max)*100}%"><span class="bar-val">${(v/1000).toFixed(0)}k</span></div>`).join('');
+            document.getElementById('weekTotal').innerText="Rp "+wTot.toLocaleString();
+
+            let curM = now.getMonth();
+            let mTrans = data.trans.filter(t=>new Date(t.ts).getMonth()===curM);
+            let mTot = mTrans.reduce((a,b)=>a+b.n,0);
+            document.getElementById('monthTotal').innerText="Rp "+mTot.toLocaleString();
+            document.getElementById('monthList').innerHTML = mTrans.map(t=>`<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px dashed #eee;font-size:12px;"><span>${t.date}</span><b>Rp ${t.n.toLocaleString()}</b></div>`).join('');
+        }
+
+        // PUBLIC
+        window.calcPub = () => {
+            let p=parseInt(document.getElementById('pubPrice').value)||10000;
+            let n=parseInt(document.getElementById('pubNom').value)||0;
+            let l=(n/p).toFixed(2);
+            document.getElementById('pubLit').innerText=l+" L";
+            updRec('pub',n,l,p);
+        }
+        window.updRec = (mode,n=0,l=0,p=10000) => {
+            let prefix = mode==='pub'?'r':'ar';
+            let nm = mode==='pub'?document.getElementById('pubName').value:data.store;
+            let ad = mode==='pub'?document.getElementById('pubAddr').value:data.addr;
+            document.getElementById(prefix+'Name').innerText=nm||"POM";
+            document.getElementById(prefix+'Addr').innerText=ad||"Indonesia";
+            document.getElementById(prefix+'Date').innerText=new Date().toLocaleDateString();
+            document.getElementById(prefix+'Time').innerText=new Date().toLocaleTimeString();
+            document.getElementById(prefix+'Det').innerText=`${l} L x ${p}`;
+            document.getElementById(prefix+'Tot').innerText=n.toLocaleString();
+            document.getElementById(prefix+'Big').innerText="Rp "+n.toLocaleString();
+        }
+        window.wa = (mode) => {
+            let nm = mode==='pub' ? document.getElementById('rName').innerText : data.store;
+            let n = mode==='pub' ? document.getElementById('pubNom').value : document.getElementById('admNom').value;
+            window.open(`https://wa.me/?text=*${nm}*%0ATotal: Rp ${n}`, '_blank');
+        }
+
+        // SETTING
+        window.updatePhoto = (e) => {
+            let f=e.target.files[0]; if(f){ let r=new FileReader(); r.onload=(v)=>{ data.photo=v.target.result; renderDash(); }; r.readAsDataURL(f); }
+        }
+        window.saveSet = () => {
+            data.store=document.getElementById('setStore').value;
+            data.addr=document.getElementById('setAddr').value;
+            data.price=parseInt(document.getElementById('setPrice').value);
+            data.admin=document.getElementById('setAdmin').value;
+            data.groqKey=document.getElementById('setGroqKey').value; // Save Groq Key
+            let np=document.getElementById('setPass').value; if(np) data.pass=np;
+            localStorage.setItem('dl_data', JSON.stringify(data));
+            alert("Disimpan! AI siap digunakan jika API Key valid.");
+        }
+        window.clearData = () => { if(confirm("Hapus?")) { data.trans=[]; localStorage.setItem('dl_data', JSON.stringify(data)); renderDash(); } }
+    </script>
+</body>
+</html>
+
