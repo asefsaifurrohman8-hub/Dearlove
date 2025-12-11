@@ -2,720 +2,429 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DEAR LOVE System + AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Business Pro (Settings Fixed)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-    
-    <!-- Libraries -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    <!-- Marked for Markdown parsing in Chat -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
     <style>
         :root {
-            /* Color Palette Premium */
-            --bg-body: #F3F4F6;
-            --primary-blue: #0F172A; /* Darker Blue for elegance */
-            --accent-blue: #2563EB; /* Bright Blue for actions */
-            --card-gradient: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
-            --ai-gradient: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%); /* New AI Color */
-            --text-main: #1F2937;
-            --text-sub: #6B7280;
-            --white: #FFFFFF;
-            
-            --safe-top: env(safe-area-inset-top, 20px);
-            --safe-bottom: env(safe-area-inset-bottom, 20px);
+            --p: #2563eb; --bg: #f8fafc; --w: #ffffff; --txt: #0f172a; --gry: #64748b;
+            --bd: #e2e8f0; --suc: #10b981; --err: #ef4444; --warn: #f59e0b;
+            --rad: 20px; --shd: 0 4px 20px -5px rgba(0,0,0,0.05);
         }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans',sans-serif; -webkit-tap-highlight-color:transparent; }
+        body { background:var(--bg); color:var(--txt); padding-bottom:100px; max-width:500px; margin:0 auto; min-height:100vh; font-size:14px; }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        body { 
-            margin: 0; font-family: 'DM Sans', sans-serif; 
-            background: var(--bg-body); color: var(--text-main);
-            height: 100vh; overflow: hidden;
-        }
+        /* HEADER & HERO */
+        .header { background:var(--w); padding:15px 20px; position:sticky; top:0; z-index:50; border-bottom:1px solid var(--bd); display:flex; justify-content:space-between; align-items:center; }
+        .icon-btn { width:36px; height:36px; border-radius:50%; border:1px solid var(--bd); background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--txt); }
+        .hero { margin:20px; background:linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); padding:25px; border-radius:24px; color:white; box-shadow:0 8px 25px -5px rgba(37,99,235,0.4); }
+        .hero h1 { font-size:2rem; font-weight:800; margin:5px 0; letter-spacing:-1px; }
 
-        /* --- SYSTEM SCREENS --- */
-        .screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-body); display: none; flex-direction: column;
-            z-index: 1;
-        }
-        .screen.active { display: flex; animation: fadeIn 0.3s; }
-        
-        .scroll-content {
-            flex: 1; overflow-y: auto; padding: 20px;
-            padding-bottom: calc(100px + var(--safe-bottom)); 
-            scrollbar-width: none; /* Hide scrollbar */
-        }
-        .scroll-content::-webkit-scrollbar { display: none; }
+        /* CARDS & GRID */
+        .container { padding:0 20px; }
+        .card { background:var(--w); border-radius:var(--rad); padding:18px; box-shadow:var(--shd); margin-bottom:15px; border:1px solid rgba(255,255,255,0.8); }
+        .grid-menu { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
+        .menu-item { background:var(--w); padding:12px 5px; border-radius:14px; border:1px solid var(--bd); text-align:center; cursor:pointer; transition:0.2s; }
+        .menu-item:active { transform:scale(0.95); border-color:var(--p); background:#eff6ff; }
+        .menu-item i { font-size:1.2rem; color:var(--p); margin-bottom:6px; display:block; }
+        .menu-item span { font-size:0.65rem; font-weight:600; }
 
-        /* --- 1. MENU UTAMA (PILIHAN) --- */
-        #menuScreen { justify-content: center; align-items: center; padding: 30px; }
-        .menu-logo { width: 80px; margin-bottom: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .menu-card {
-            background: white; width: 100%; max-width: 320px; padding: 20px;
-            border-radius: 20px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.03); cursor: pointer; border: 1px solid #eee;
-            transition: transform 0.1s;
-        }
-        .menu-card:active { transform: scale(0.98); background: #f9fafb; }
-        .icon-box { 
-            width: 50px; height: 50px; border-radius: 14px; 
-            display: flex; align-items: center; justify-content: center; font-size: 24px; 
-        }
+        /* INPUTS & BUTTONS */
+        .form-group { margin-bottom:15px; }
+        .label { display:block; font-size:0.8rem; color:var(--gry); margin-bottom:6px; font-weight:600; }
+        .input { width:100%; padding:12px; border-radius:12px; border:1px solid var(--bd); background:#f8fafc; outline:none; font-size:0.95rem; }
+        .input:focus { border-color:var(--p); background:#fff; }
+        .btn { width:100%; padding:14px; border-radius:12px; background:var(--p); color:white; border:none; font-weight:700; cursor:pointer; font-size:1rem; box-shadow:0 4px 15px rgba(37,99,235,0.2); }
+        .btn:active { transform:scale(0.98); }
 
-        /* --- 2. LOGIN ADMIN --- */
-        #loginScreen { justify-content: center; padding: 30px; background: var(--bg-body); }
-        .input-group {
-            background: white; display: flex; align-items: center; padding: 5px 15px;
-            border-radius: 15px; border: 1px solid #e5e7eb; margin-bottom: 15px;
-        }
-        .input-group span { color: var(--text-sub); margin-right: 10px; }
-        .clean-input {
-            width: 100%; padding: 12px 0; border: none; outline: none; 
-            font-size: 15px; font-family: 'DM Sans'; color: var(--text-main);
-        }
-        .btn-black { 
-            width: 100%; padding: 16px; border-radius: 16px; border: none; 
-            background: var(--primary-blue); color: white; font-weight: 700; font-size: 15px; 
-            cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        /* --- 3. DASHBOARD ADMIN (HEADER & CARD) --- */
-        /* Header */
-        .top-nav {
-            background: var(--card-gradient); /* sama dengan main-card */
-            padding: calc(var(--safe-top) + 20px) 24px 10px 24px;
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-        }
-
-        .admin-name {
-            font-size: 16px;
-            font-weight: 700;
-            color: #fff;
-        }
-        .profile-btn { 
-            width: 50px; height: 50px; border-radius: 50px; background: white; 
-            display: flex; align-items: center; justify-content: center; overflow:hidden; cursor: pointer;
-            border:4px solid white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.10);
-        }
-
-        /* Kartu Biru (Fixed Layout) */
-        .main-card {
-            background: var(--card-gradient); color: var(--white);
-            border-radius: 28px; padding: 30px 25px; position: relative;
-            box-shadow: 0 15px 40px rgba(37, 99, 235, 0.3); margin-bottom: 25px;
-        }
-        .ai-card {
-            background: var(--ai-gradient); color: var(--white);
-            border-radius: 20px; padding: 20px; position: relative;
-            box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3); margin-bottom: 25px;
-            overflow: hidden;
-        }
-        .ai-card::before {
-            content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
-            animation: rotate 10s linear infinite;
-        }
-        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        .card-label { font-size: 12px; opacity: 0.8; font-weight: 500; margin-bottom: 5px; letter-spacing: 0.5px; position: relative; z-index: 1;}
-        .card-value { font-size: 36px; font-weight: 700; letter-spacing: -1px; margin-bottom: 2px; position: relative; z-index: 1;}
-        .card-sub { font-size: 13px; font-weight: 500; opacity: 0.9; display: flex; align-items: center; gap: 5px; position: relative; z-index: 1;}
-        
-        /* Grafik (Di Bawah Kartu) */
-        .chart-section { margin-bottom: 25px; }
-        .chart-header { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: 700; font-size: 15px; padding: 0 5px; }
-        .chart-container {
-            background: white; padding: 20px; border-radius: 24px; height: 180px; 
-            display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; 
-            box-shadow: 0 5px 20px rgba(0,0,0,0.03);
-        }
-        .bar { background: #EFF6FF; width: 100%; border-radius: 6px 6px 0 0; position: relative; transition: height 0.5s; }
-        .bar.today { background: var(--accent-blue); }
-        .bar-val { position: absolute; top: -20px; width: 100%; text-align: center; font-size: 9px; color: var(--text-sub); font-weight: 700; }
-
-        /* --- 4. LIST RIWAYAT --- */
-        .section-title { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 15px; padding: 0 5px; }
-        .trans-item {
-            background: var(--white); border-radius: 20px; padding: 18px; margin-bottom: 10px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid #f3f4f6;
-        }
-        .ti-icon { 
-            width: 45px; height: 45px; background: #F3F4F6; border-radius: 14px; 
-            display: flex; align-items: center; justify-content: center; color: var(--text-main); margin-right: 15px; 
-        }
-        
-        /* --- 5. NAVIGASI BAWAH --- */
-        .bottom-nav {
-            position: fixed; bottom: calc(30px + var(--safe-bottom)); left: 20px; right: 20px;
-            background: var(--white); padding: 12px 30px; border-radius: 30px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1); z-index: 99;
-        }
-        .nav-btn { text-align: center; color: #9CA3AF; cursor: pointer; flex: 1; transition: 0.2s; }
-        .nav-btn.active { color: var(--accent-blue); transform: translateY(-2px); }
-        .nav-btn span { display: block; font-size: 26px; }
-        
-        /* --- 6. MODE PUBLIK & FORM --- */
-        .form-label { font-size: 11px; color: var(--text-sub); font-weight: 700; text-transform: uppercase; margin-bottom: 8px; display: block; margin-left: 5px; }
-        .card-input-group {
-            background: white; padding: 20px; border-radius: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.03); margin-bottom: 20px;
-        }
-        
-        /* Input Harga & Nominal */
-        .big-input { width: 100%; border: none; font-size: 32px; font-weight: bold; color: var(--accent-blue); outline: none; background: transparent; }
-        
-        /* Struk Preview */
-        .receipt-view {
-            background: white; padding: 25px 20px; border: 1px solid #ddd; font-family: 'Share Tech Mono', monospace;
-            font-size: 12px; text-align: center; margin: 15px 0; position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        }
-        .receipt-view::before {
-            content: ""; position: absolute; top: -5px; left: 0; width: 100%; height: 10px; 
-            background: radial-gradient(circle, transparent 5px, white 5px) repeat-x; background-size: 10px 10px;
-        }
-        .r-row { display: flex; justify-content: space-between; margin: 4px 0; }
-        .r-line { border-bottom: 1px dashed #bbb; margin: 12px 0; }
+        /* CHAT BOX (Gaya DEAR LOVE) */
+        .chat-box { height:60vh; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:12px; }
+        .msg-bubble { padding:10px 15px; border-radius:12px; font-size:13px; line-height:1.5; max-width:85%; }
+        .msg-user { background:var(--p); color:white; align-self:flex-end; border-bottom-right-radius:2px; }
+        .msg-ai { background:white; border:1px solid var(--bd); color:var(--txt); align-self:flex-start; border-bottom-left-radius:2px; }
         
         /* UTILS */
-        .btn-action { flex:1; padding: 15px; border-radius: 15px; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .chips { display:flex; gap:8px; overflow-x:auto; padding-bottom:5px; }
+        .chip-lbl { white-space:nowrap; padding:8px 16px; border-radius:20px; border:1px solid var(--bd); font-size:0.8rem; font-weight:600; cursor:pointer; background:var(--w); }
+        input[type="radio"]:checked + .chip-lbl { background:var(--txt); color:white; border-color:var(--txt); }
+        .list-item { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #f1f5f9; }
+        .badge { padding:4px 10px; border-radius:8px; font-size:0.7rem; font-weight:700; }
+        .bg-green { background:#dcfce7; color:#166534; } .bg-red { background:#fee2e2; color:#991b1b; }
+
+        /* NAVIGATION & MODAL */
+        .nav-bar { position:fixed; bottom:0; left:0; width:100%; background:rgba(255,255,255,0.95); backdrop-filter:blur(10px); border-top:1px solid var(--bd); padding:10px 0 25px; display:flex; justify-content:space-around; z-index:100; }
+        .nav-icon { text-align:center; width:20%; color:var(--gry); cursor:pointer; }
+        .nav-icon.active { color:var(--p); }
+        .nav-icon i { font-size:1.4rem; margin-bottom:4px; display:block; }
+        .nav-icon span { font-size:0.6rem; font-weight:700; }
+
+        .section { display:none; animation:fade .3s ease; } .section.active { display:block; }
+        @keyframes fade { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
         
-        #inputModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; display: none; justify-content: center; align-items: flex-end; }
-        .modal-sheet { background: #F9FAFB; width: 100%; border-radius: 30px 30px 0 0; padding: 30px 25px 40px 25px; animation: slideUp 0.3s; max-height: 90vh; overflow-y: auto; }
-
-        /* AI Chat Floating Button */
-        .fab-ai {
-            position: fixed; bottom: 110px; right: 20px; width: 55px; height: 55px;
-            background: var(--ai-gradient); border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            color: white; box-shadow: 0 5px 20px rgba(124, 58, 237, 0.4);
-            cursor: pointer; z-index: 100; animation: bounce 2s infinite;
-        }
-        @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateY(0);} 40% {transform: translateY(-6px);} 60% {transform: translateY(-3px);} }
-
-        /* AI Chat Modal */
-        #aiModal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.6); z-index: 300; display: none; 
-            justify-content: center; align-items: center;
-        }
-        .ai-chat-box {
-            width: 90%; max-width: 400px; height: 70vh; background: white; 
-            border-radius: 20px; display: flex; flex-direction: column; overflow: hidden;
-            animation: fadeIn 0.3s;
-        }
-        .ai-header {
-            padding: 15px; background: var(--ai-gradient); color: white; 
-            display: flex; justify-content: space-between; align-items: center;
-            font-weight: bold;
-        }
-        .ai-messages {
-            flex: 1; padding: 15px; overflow-y: auto; background: #F9FAFB;
-            display: flex; flex-direction: column; gap: 10px;
-        }
-        .msg-bubble {
-            max-width: 80%; padding: 10px 14px; border-radius: 15px; font-size: 13px; line-height: 1.4;
-        }
-        .msg-ai { background: white; align-self: flex-start; border-radius: 0 15px 15px 15px; border: 1px solid #eee; }
-        .msg-user { background: #E0E7FF; color: var(--primary-blue); align-self: flex-end; border-radius: 15px 0 15px 15px; }
-        .ai-input-area {
-            padding: 10px; border-top: 1px solid #eee; display: flex; gap: 10px; background: white;
-        }
-        .typing-dots { font-size: 10px; color: #888; font-style: italic; margin-left: 5px; display: none;}
-
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @media print { body * { visibility: hidden; } #receiptArea, #receiptArea * { visibility: visible; } #adminReceiptArea, #adminReceiptArea * { visibility: visible; } #receiptArea, #adminReceiptArea { position: absolute; left: 0; top: 0; width: 58mm; margin: 0; padding: 0; box-shadow: none; border: none; } }
-
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:200; align-items:center; justify-content:center; backdrop-filter:blur(3px); }
+        .modal-content { background:var(--w); width:85%; padding:20px; border-radius:20px; box-shadow:0 10px 40px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
-    <!-- 1. MENU UTAMA -->
-    <div id="menuScreen" class="screen active">
-        <div style="width: 100%; max-width: 320px; margin: auto; text-align: center;">
-            <img src="logo.png" style="width:90px; border-radius:22px; margin-bottom:30px; box-shadow:0 10px 25px rgba(0,0,0,0.1);" onerror="this.style.display='none'">
-            <h1 style="color:var(--primary-blue); margin:0; font-size:28px;">DEAR LOVE</h1>
-            <p style="color:var(--text-sub); font-size:13px; margin-bottom:50px;">Sistem Manajemen Digital + AI</p>
-            
-            <div onclick="nav('publicScreen')" class="menu-card">
-                <div class="icon-box" style="background:#E0F2FE; color:#0284C7;"><span class="material-icons-round">storefront</span></div>
-                <div style="text-align:left;"><div style="font-weight:700;">Mode Publik</div><div style="font-size:12px;color:#666;">Kasir Umum</div></div>
-            </div>
-
-            <div onclick="checkLogin()" class="menu-card">
-                <div class="icon-box" style="background:#DCFCE7; color:#16A34A;"><span class="material-icons-round">verified_user</span></div>
-                <div style="text-align:left;"><div style="font-weight:700;">Mode Saya</div><div style="font-size:12px;color:#666;">Admin Owner</div></div>
+    <div id="home" class="section active">
+        <div class="header">
+            <h3>Bisnis<span style="color:var(--p)">Pro</span></h3>
+            <button class="icon-btn" onclick="ui.modal('setModal')"><i class="fas fa-cog"></i></button>
+        </div>
+        <div class="hero">
+            <span style="opacity:0.9; font-size:0.85rem">Total Aset Bersih</span>
+            <h1 id="dAsset">Rp 0</h1>
+            <div style="margin-top:10px; font-size:0.8rem; display:flex; gap:15px; opacity:0.9">
+                <span><i class="fas fa-arrow-up"></i> <span id="dSale">0</span></span>
+                <span><i class="fas fa-wallet"></i> <span id="dNet">0</span></span>
             </div>
         </div>
-    </div>
-
-    <!-- 2. LOGIN -->
-    <div id="loginScreen" class="screen">
-        <div style="display:flex; flex-direction:column; justify-content:center; height:100%; padding:30px;">
-            <div style="margin-bottom:30px;">
-                <div onclick="nav('menuScreen')" style="display:inline-flex; align-items:center; gap:5px; color:var(--text-sub); cursor:pointer;"><span class="material-icons-round">arrow_back</span> Kembali</div>
-            </div>
-            <h2 style="font-size:28px; margin-bottom:10px;">Selamat Datang</h2>
-            <p style="color:var(--text-sub); margin-bottom:40px;">Masukkan kata sandi untuk akses admin.</p>
-            
-            <div class="input-group">
-                <span class="material-icons-round">lock</span>
-                <input type="password" id="passInput" class="clean-input" placeholder="Kata Sandi...">
+        <div class="container">
+            <div class="label" style="margin:20px 0 10px">MENU UTAMA</div>
+            <div class="grid-menu">
+                <div class="menu-item" onclick="ui.nav('hpp')"><i class="fas fa-magic"></i><span>AI HPP</span></div>
+                <div class="menu-item" onclick="ui.nav('debt')"><i class="fas fa-book"></i><span>Hutang</span></div>
+                <div class="menu-item" onclick="ui.nav('target')"><i class="fas fa-bullseye"></i><span>Target</span></div>
+                <div class="menu-item" onclick="ui.nav('calc')"><i class="fas fa-calculator"></i><span>Margin</span></div>
             </div>
             
-            <button class="btn-black" onclick="doLogin()">Masuk Dashboard</button>
-            <div style="margin-top:20px; text-align:center; font-size:13px; color:var(--accent-blue); cursor:pointer;" onclick="forgotPass()">Lupa Kata Sandi?</div>
+            <div class="label" style="margin:20px 0 10px; display:flex; justify-content:space-between">
+                <span>TARGET BULANAN</span> <span id="tPct" style="color:var(--p)">0%</span>
+            </div>
+            <div class="card" style="padding:15px">
+                <div style="background:#f1f5f9; height:8px; border-radius:4px; overflow:hidden">
+                    <div id="tBar" style="width:0%; height:100%; background:var(--p); transition:1s"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-top:8px; color:var(--gry)">
+                    <span id="tCur">0</span> <span id="tMax">Target: 0</span>
+                </div>
+            </div>
+
+            <div class="label" style="margin:20px 0 10px">STOK MENIPIS</div>
+            <div class="card" id="lowStockList" style="display:flex; flex-wrap:wrap; gap:5px; min-height:50px">
+                <small style="color:var(--gry)">Aman terkendali.</small>
+            </div>
         </div>
     </div>
 
-    <!-- 3. MODE PUBLIK -->
-    <div id="publicScreen" class="screen">
-        <div style="padding:calc(var(--safe-top) + 20px) 24px 10px; display:flex; justify-content:space-between; align-items:center;">
-            <div onclick="nav('menuScreen')" style="cursor:pointer;"><span class="material-icons-round">arrow_back</span></div>
-            <div style="font-weight:700;">MODE PUBLIK</div>
-            <div style="width:24px"></div>
-        </div>
-        
-        <div class="scroll-content">
-            <span class="form-label">IDENTITAS STRUK (BISA DIEDIT)</span>
-            <div class="card-input-group">
-                <div class="input-group">
-                    <span class="material-icons-round">store</span>
-                    <input type="text" id="pubName" class="clean-input" placeholder="Nama Toko" oninput="updRec('pub')">
-                </div>
-                <div class="input-group">
-                    <span class="material-icons-round">place</span>
-                    <input type="text" id="pubAddr" class="clean-input" placeholder="Alamat Lengkap" oninput="updRec('pub')">
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
-                    <span style="font-size:13px; font-weight:600;">Harga / Liter</span>
-                    <div style="background:#f3f4f6; padding:8px 15px; border-radius:10px; display:flex; align-items:center;">
-                        <span style="font-size:12px; margin-right:5px;">Rp</span>
-                        <input type="number" id="pubPrice" value="10000" style="width:70px; border:none; background:transparent; font-weight:bold; text-align:right; outline:none;" oninput="calcPub()">
+    <div id="trans" class="section">
+        <div class="header"><h3>Input Transaksi</h3></div>
+        <div class="container" style="padding-top:20px">
+            <div class="card">
+                <form id="fTrans">
+                    <div class="form-group"><span class="label">Tanggal</span><input type="date" id="tDate" class="input" required></div>
+                    <div class="form-group"><span class="label">Deskripsi</span><input type="text" id="tDesc" class="input" placeholder="Cth: Bayar Listrik" required></div>
+                    <div class="form-group chips">
+                        <label><input type="radio" name="tCat" value="Pendapatan" checked hidden><div class="chip-lbl">Masuk</div></label>
+                        <label><input type="radio" name="tCat" value="Beban" hidden><div class="chip-lbl">Keluar</div></label>
+                        <label><input type="radio" name="tCat" value="Aset" hidden><div class="chip-lbl">Aset</div></label>
+                        <label><input type="radio" name="tCat" value="Kewajiban" hidden><div class="chip-lbl">Hutang</div></label>
+                        <label><input type="radio" name="tCat" value="Ekuitas" hidden><div class="chip-lbl">Modal</div></label>
                     </div>
+                    <div class="form-group"><span class="label">Nominal (Rp)</span><input type="number" id="tNom" class="input" placeholder="0" required></div>
+                    <button type="submit" class="btn">Simpan Data</button>
+                </form>
+            </div>
+            <div class="label">RIWAYAT TERAKHIR</div>
+            <div id="lTrans" style="padding-bottom:80px"></div>
+        </div>
+    </div>
+
+    <div id="prod" class="section">
+        <div class="header" style="gap:10px">
+            <input type="text" id="pSrc" class="input" placeholder="Cari barang..." onkeyup="app.filP()" style="padding:10px">
+        </div>
+        <div class="container" style="padding-top:20px">
+            <div class="card" style="padding:10px 15px">
+                <details>
+                    <summary style="font-weight:700; color:var(--p); cursor:pointer"> + Tambah Produk Baru</summary>
+                    <form id="fProd" style="margin-top:15px; border-top:1px solid var(--border); padding-top:15px">
+                        <div class="form-group"><input id="pN" class="input" placeholder="Nama Produk" required></div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px" class="form-group">
+                            <input type="number" id="pB" class="input" placeholder="Harga Beli">
+                            <input type="number" id="pS" class="input" placeholder="Harga Jual">
+                        </div>
+                        <div class="form-group"><input type="number" id="pQ" class="input" placeholder="Stok Awal"></div>
+                        <button type="submit" class="btn">Simpan</button>
+                    </form>
+                </details>
+            </div>
+            <div id="lProd" style="padding-bottom:80px"></div>
+        </div>
+    </div>
+
+    <div id="rep" class="section">
+        <div class="header"><h3>Laporan</h3></div>
+        <div class="container" style="padding-top:20px">
+            <div class="card">
+                <h4 style="margin-bottom:15px">Laba Rugi</h4>
+                <div class="list-item"><span>Penjualan</span><b style="color:var(--suc)" id="rSale">0</b></div>
+                <div class="list-item"><span>HPP (Modal)</span><b style="color:var(--err)" id="rCogs">0</b></div>
+                <div class="list-item"><span>Beban Ops</span><b style="color:var(--err)" id="rExp">0</b></div>
+                <div style="background:var(--txt); color:white; padding:15px; border-radius:12px; margin-top:10px; display:flex; justify-content:space-between">
+                    <span>Laba Bersih</span> <b id="rNet">0</b>
                 </div>
             </div>
-
-            <span class="form-label">TRANSAKSI</span>
-            <div class="card-input-group" style="text-align:center;">
-                <input type="number" id="pubNom" class="big-input" placeholder="0" oninput="calcPub()" style="text-align:center;">
-                <div style="font-size:12px; color:var(--text-sub); margin-top:5px;">Estimasi: <span id="pubLit" style="font-weight:700; color:var(--accent-blue);">0 L</span></div>
-            </div>
-
-            <div id="receiptArea" class="receipt-view">
-                <div style="text-align:center; font-weight:bold; font-size:16px;" id="rName">POM MINI</div>
-                <div style="text-align:center; margin-bottom:10px;" id="rAddr">Indonesia</div>
-                <div class="r-line"></div>
-                <div class="r-row"><span id="rDate">-</span><span id="rTime">-</span></div>
-                <div class="r-line"></div>
-                <div style="font-weight:bold; text-align:left;">PERTALITE</div>
-                <div class="r-row"><span id="rDet">0 L x 10000</span><span id="rTot">0</span></div>
-                <div class="r-line"></div>
-                <div class="r-row" style="font-size:16px; font-weight:bold;"><span>TOTAL</span><span id="rBig">0</span></div>
-                <div style="text-align:center; margin-top:15px;">TERIMA KASIH</div>
-                <div style="text-align:center; font-size:9px; color:#aaa; margin-top:5px;">System by DEAR LOVE</div>
-            </div>
-
-            <div style="display:flex; gap:10px;">
-                <button class="btn-action" style="background:#1F2937; color:white;" onclick="window.print()"><span class="material-icons-round">print</span> Print</button>
-                <button class="btn-action" style="background:#10B981; color:white;" onclick="wa('pub')"><span class="material-icons-round">share</span> WA</button>
+            <div class="card">
+                <h4 style="margin-bottom:15px">Neraca</h4>
+                <div class="list-item"><span>Kas Tunai</span><b id="bCash">0</b></div>
+                <div class="list-item"><span>Nilai Stok</span><b id="bInv">0</b></div>
+                <div class="list-item"><span>Hutang</span><b id="bLiab">0</b></div>
+                <div class="list-item"><span>Ekuitas</span><b id="bEq">0</b></div>
             </div>
         </div>
     </div>
 
-    <!-- 4. ADMIN DASHBOARD -->
-    <div id="adminScreen" class="screen">
-        <div class="top-nav">
-            <div>
-                <div style="font-size:25px; font-weight:600;" id="dispAdminName" class="admin-name">DEAR LOVE</div>
+    <div id="ai" class="section">
+        <div class="header"><h3>AI Konsultan</h3></div>
+        <div class="container" style="height:calc(100vh - 140px); display:flex; flex-direction:column; padding-top:10px">
+            <div id="cBox" class="chat-box" style="flex:1">
+                <div class="msg-bubble msg-ai">Halo! Saya siap menganalisis data keuangan Anda. Pastikan API Key Groq sudah diisi di menu Pengaturan (Gear) ya.</div>
             </div>
-            <img id="dispPhoto" src="logo.png" onerror="this.src='https://via.placeholder.com/50'" style="width:50px;height:50px;object-fit:cover;border-radius:50%;">
+            <div style="display:flex; gap:10px; padding:15px 0">
+                <input id="aiIn" class="input" placeholder="Ketik pertanyaan...">
+                <button onclick="app.ask()" style="width:50px; background:var(--txt); color:white; border:none; border-radius:12px"><i class="fas fa-paper-plane"></i></button>
+            </div>
         </div>
+    </div>
 
-        <div class="scroll-content">
+    <div id="hpp" class="section">
+        <div class="header"><button class="icon-btn" onclick="ui.nav('home')"><i class="fas fa-arrow-left"></i></button><h3>AI Kalkulator HPP</h3></div>
+        <div class="container" style="padding-top:20px">
+            <div class="card">
+                <span class="label">Ceritakan Resepnya</span>
+                <textarea id="hppIn" class="input" rows="5" placeholder="Cth: Kopi susu. Susu 1L 20rb pake 100ml, Kopi 1kg 80rb pake 15gr, Cup 500 perak."></textarea>
+                <button onclick="app.askHPP()" class="btn" style="margin-top:15px"><i class="fas fa-magic"></i> Hitung Otomatis</button>
+                <div id="hppRes" style="margin-top:15px; font-size:0.9rem; line-height:1.6"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="debt" class="section">
+        <div class="header"><button class="icon-btn" onclick="ui.nav('home')"><i class="fas fa-arrow-left"></i></button><h3>Buku Hutang</h3></div>
+        <div class="container" style="padding-top:20px">
+            <div class="card">
+                <form id="fDebt">
+                    <div class="form-group chips">
+                        <label><input type="radio" name="dT" value="Piutang" checked hidden><div class="chip-lbl">Piutang</div></label>
+                        <label><input type="radio" name="dT" value="Hutang" hidden><div class="chip-lbl">Hutang</div></label>
+                    </div>
+                    <div class="form-group"><input id="dN" class="input" placeholder="Nama" required></div>
+                    <div class="form-group"><input type="number" id="dA" class="input" placeholder="Jumlah" required></div>
+                    <button type="submit" class="btn">Simpan</button>
+                </form>
+            </div>
+            <div id="lDebt"></div>
+        </div>
+    </div>
+
+    <div id="target" class="section">
+        <div class="header"><button class="icon-btn" onclick="ui.nav('home')"><i class="fas fa-arrow-left"></i></button><h3>Target</h3></div>
+        <div class="container" style="padding-top:20px">
+            <div class="card">
+                <span class="label">Set Target Omzet</span>
+                <input type="number" id="tVal" class="input" style="margin-bottom:15px">
+                <button onclick="app.svT()" class="btn">Update Target</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="calc" class="section">
+        <div class="header"><button class="icon-btn" onclick="ui.nav('home')"><i class="fas fa-arrow-left"></i></button><h3>Cek Margin</h3></div>
+        <div class="container" style="padding-top:20px">
+            <div class="card">
+                <input type="number" id="cC" class="input" placeholder="Modal (HPP)" oninput="app.qc()" style="margin-bottom:10px">
+                <input type="number" id="cP" class="input" value="30" oninput="app.qc()">
+                <div style="text-align:center; margin-top:20px">
+                    <span class="label">Harga Jual</span>
+                    <h2 id="cRes" style="color:var(--p)">Rp 0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="setModal" class="modal">
+        <div class="modal-content">
+            <h3>Pengaturan</h3>
+            <div class="form-group" style="margin-top:15px">
+                <span class="label">Groq API Key (Wajib untuk AI)</span>
+                <input type="text" id="skKey" class="input" placeholder="gsk_...">
+                <small style="color:var(--gry); font-size:0.7rem">Dapatkan di console.groq.com</small>
+            </div>
+            <div class="form-group">
+                <span class="label">Limit Stok Menipis</span>
+                <input type="number" id="skLim" class="input">
+            </div>
+            <div style="display:flex; gap:10px">
+                <button onclick="document.getElementById('setModal').style.display='none'" class="btn" style="background:var(--gry)">Tutup</button>
+                <button onclick="app.svS()" class="btn">Simpan</button>
+            </div>
+            <button onclick="app.nuke()" class="btn" style="background:var(--err); margin-top:20px; font-size:0.8rem">Hapus Semua Data</button>
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-icon active" onclick="ui.nav('home',this)"><i class="fas fa-home"></i><span>Home</span></div>
+        <div class="nav-icon" onclick="ui.nav('trans',this)"><i class="fas fa-wallet"></i><span>Transaksi</span></div>
+        <div class="nav-icon" onclick="ui.nav('prod',this)"><i class="fas fa-box"></i><span>Stok</span></div>
+        <div class="nav-icon" onclick="ui.nav('rep',this)"><i class="fas fa-chart-pie"></i><span>Laporan</span></div>
+        <div class="nav-icon" onclick="ui.nav('ai',this)"><i class="fas fa-robot"></i><span>AI</span></div>
+    </div>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        const fmt = n => new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(n);
+        const now = () => new Date().toISOString().split('T')[0];
+
+        // --- FIXED UI CONTROLLER ---
+        const ui = {
+            nav: (id, el) => {
+                document.querySelectorAll('.section').forEach(x => x.classList.remove('active'));
+                $(id).classList.add('active');
+                if(['home','trans','prod','rep','ai'].includes(id)){
+                    document.querySelectorAll('.nav-icon').forEach(x => x.classList.remove('active'));
+                    if(el) el.classList.add('active');
+                }
+                window.scrollTo(0,0);
+            },
+            modal: (id) => { 
+                $(id).style.display='flex'; 
+                $('skKey').value = db.c.key || ""; 
+                $('skLim').value = db.c.limit; 
+            }
+        };
+
+        const db = {
+            t: JSON.parse(localStorage.getItem('t')) || [],
+            p: JSON.parse(localStorage.getItem('p')) || [],
+            d: JSON.parse(localStorage.getItem('d')) || [],
+            c: JSON.parse(localStorage.getItem('c')) || { key:'', limit:5, target:10000000 }
+        };
+
+        const app = {
+            sv: () => {
+                localStorage.setItem('t', JSON.stringify(db.t)); localStorage.setItem('p', JSON.stringify(db.p));
+                localStorage.setItem('d', JSON.stringify(db.d)); localStorage.setItem('c', JSON.stringify(db.c));
+                app.ren();
+            },
             
-            <!-- TAB 1: HOME -->
-            <div id="tabHome" class="tab-content active">
-                <!-- AI INSIGHT CARD (New) -->
-                <div class="ai-card" id="aiInsightBox">
-                    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        <span class="card-label" style="color:white; opacity:0.9;"><span class="material-icons-round" style="font-size:14px; vertical-align:middle;">auto_awesome</span> ANALISIS AI</span>
-                        <span style="font-size:10px; background:rgba(255,255,255,0.2); padding:3px 8px; border-radius:10px;">Groq Powered</span>
-                    </div>
-                    <div id="aiText" style="font-size:14px; line-height:1.5; font-weight:500; position:relative; z-index:1;">
-                        Klik tombol untuk analisa penjualan hari ini...
-                    </div>
-                    <button onclick="generateInsight()" style="margin-top:15px; background:white; color:#7C3AED; border:none; padding:8px 15px; border-radius:20px; font-weight:bold; font-size:12px; cursor:pointer; position:relative; z-index:1;">Analisa Sekarang</button>
-                </div>
-
-                <!-- KARTU BIRU -->
-                <div class="main-card">
-                    <div class="card-header">
-                        <span class="card-label">Pendapatan Hari Ini</span>
-                        <span style="background:rgba(255,255,255,0.2); padding:4px 10px; border-radius:20px; font-size:10px; font-weight:700;">LIVE</span>
-                    </div>
-                    <div class="card-value" id="dailyInc">Rp 0</div>
-                    <div class="card-sub"><span class="material-icons-round" style="font-size:16px;">local_gas_station</span> <span id="dailyLit">0 Liter</span></div>
-                </div>
-
-                <!-- GRAFIK -->
-                <div class="chart-section">
-                    <div class="chart-header">
-                        <span>Grafik 7 Hari</span>
-                        <span style="color:var(--accent-blue);" id="weekTotal">Rp 0</span>
-                    </div>
-                    <div class="chart-container" id="chartBox"></div>
-                </div>
-
-                <!-- RIWAYAT -->
-                <div class="section-title" style="display:flex; justify-content:space-between;">
-                    <span>Transaksi Terakhir</span>
-                    <span style="font-size:12px; color:var(--accent-blue); cursor:pointer;" onclick="switchTab('tabHist')">Lihat Semua</span>
-                </div>
-                <div id="recentList"></div>
-            </div>
-
-            <!-- TAB 2: RIWAYAT LENGKAP -->
-            <div id="tabHist" class="tab-content">
-                <h2 style="margin-bottom:20px;">Riwayat Lengkap</h2>
-                <div id="fullHistory"></div>
-                <button class="btn-black" style="background:#fee2e2; color:#ef4444; margin-top:20px;" onclick="clearData()">Hapus Semua Data</button>
-            </div>
-
-            <!-- TAB 3: LAPORAN BULANAN -->
-            <div id="tabRep" class="tab-content">
-                <h2 style="margin-bottom:20px;">Laporan Bulanan</h2>
-                <div class="card-input-group" style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>Total Bulan Ini</div>
-                    <div style="font-size:20px; font-weight:700; color:var(--primary-blue);" id="monthTotal">Rp 0</div>
-                </div>
-                <div id="monthList"></div>
-            </div>
-
-            <!-- TAB 4: SETTING -->
-            <div id="tabSet" class="tab-content">
-                <h2 style="margin-bottom:20px;">Pengaturan</h2>
-                <div style="text-align:center; margin-bottom:30px;">
-                    <img id="settingPhoto" src="logo.png" style="width:90px; height:90px; border-radius:50%; object-fit:cover; border:4px solid white; box-shadow:0 5px 15px rgba(0,0,0,0.1);">
-                    <input type="file" id="uploadPhoto" onchange="updatePhoto(event)" style="display:block; margin:15px auto; font-size:12px;">
-                </div>
-
-                <span class="form-label">DATA TOKO</span>
-                <div class="input-group"><span class="material-icons-round">store</span><input type="text" id="setStore" class="clean-input" placeholder="Nama Toko"></div>
-                <div class="input-group"><span class="material-icons-round">place</span><input type="text" id="setAddr" class="clean-input" placeholder="Alamat"></div>
-                <div class="input-group"><span class="material-icons-round">payments</span><input type="number" id="setPrice" class="clean-input" placeholder="Harga"></div>
-                
-                <span class="form-label" style="margin-top:20px;">AKUN ADMIN</span>
-                <div class="input-group"><span class="material-icons-round">person</span><input type="text" id="setAdmin" class="clean-input" placeholder="Nama Admin"></div>
-                <div class="input-group"><span class="material-icons-round">lock</span><input type="password" id="setPass" class="clean-input" placeholder="Password Baru"></div>
-                
-                <!-- NEW AI SETTING -->
-                <span class="form-label" style="margin-top:20px;">AI INTELLIGENCE (GROQ)</span>
-                <div class="input-group"><span class="material-icons-round">key</span><input type="text" id="setGroqKey" class="clean-input" placeholder="Masukkan API Key Groq"></div>
-                <div style="font-size:10px; color:#666; margin-bottom:15px;">Dapatkan API Key gratis di console.groq.com</div>
-
-                <button class="btn-black" onclick="saveSet()">Simpan Perubahan</button>
-            </div>
-        </div>
-
-        <!-- FLOAT BTN AI -->
-        <div class="fab-ai" onclick="openAIChat()">
-            <span class="material-icons-round">smart_toy</span>
-        </div>
-
-        <!-- NAV BOTTOM -->
-        <div class="bottom-nav">
-            <div class="nav-btn active" onclick="switchTab('tabHome', this)"><span class="material-icons-round">home</span></div>
-            <div class="nav-btn" onclick="switchTab('tabHist', this)"><span class="material-icons-round">receipt_long</span></div>
-            <div class="nav-btn" onclick="openInputModal()" style="margin-top:-25px;"><div style="width:55px; height:55px; background:var(--primary-blue); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; box-shadow:0 10px 25px rgba(0,71,171,0.3);"><span class="material-icons-round" style="font-size:28px;">add</span></div></div>
-            <div class="nav-btn" onclick="switchTab('tabRep', this)"><span class="material-icons-round">pie_chart</span></div>
-            <div class="nav-btn" onclick="switchTab('tabSet', this)"><span class="material-icons-round">settings</span></div>
-        </div>
-    </div>
-
-    <!-- MODAL INPUT (ADMIN) -->
-    <div id="inputModal">
-        <div class="modal-sheet">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                <h3>Input Jual</h3>
-                <span class="material-icons-round" onclick="closeModal()" style="cursor:pointer;">close</span>
-            </div>
-            <div class="card-input-group" style="text-align:center;">
-                <input type="number" id="admNom" style="width:100%; border:none; background:transparent; font-size:36px; font-weight:700; text-align:center; outline:none; color:var(--primary-blue);" placeholder="0" oninput="calcAdm()">
-                <div style="font-size:13px; color:#666; margin-top:5px;">Estimasi: <span id="admLit">0 L</span></div>
-            </div>
+            // Logic
+            addT: (e) => {
+                e.preventDefault();
+                const c = document.querySelector('input[name="tCat"]:checked').value;
+                const n = parseFloat($('tNom').value)||0;
+                let dr=0, cr=0;
+                if(['Pendapatan','Kewajiban','Ekuitas'].includes(c)) dr=n; else cr=n;
+                db.t.push({id:Date.now(), dt:$('tDate').value, ds:$('tDesc').value, c:c, dr, cr});
+                e.target.reset(); $('tDate').value=now(); app.sv(); alert('Tersimpan');
+            },
+            addP: (e) => {
+                e.preventDefault();
+                db.p.push({id:Date.now(), n:$('pN').value, b:parseFloat($('pB').value)||0, s:parseFloat($('pS').value)||0, q:parseInt($('pQ').value)||0});
+                e.target.reset(); app.sv();
+            },
+            sell: (id) => {
+                const p = db.p.find(x=>x.id===id); if(!p||p.q<=0)return alert('Habis!');
+                p.q--;
+                db.t.push({id:Date.now(), dt:now(), ds:'Jual: '+p.n, c:'Pendapatan', dr:p.s, cr:0});
+                db.t.push({id:Date.now()+1, dt:now(), ds:'HPP: '+p.n, c:'HPP', dr:0, cr:p.b});
+                app.sv();
+            },
+            filP: () => { const q=$('pSrc').value.toLowerCase(); app.rP(db.p.filter(x=>x.n.toLowerCase().includes(q))); },
+            addD: (e) => {
+                e.preventDefault();
+                db.d.push({id:Date.now(), t:document.querySelector('input[name="dT"]:checked').value, n:$('dN').value, a:parseFloat($('dA').value), s:false});
+                e.target.reset(); app.sv();
+            },
+            togD: (id) => { const x=db.d.find(y=>y.id===id); if(x){x.s=!x.s; app.sv();} },
             
-            <!-- Struk Admin Hidden -->
-            <div id="adminReceiptArea" class="receipt-view" style="display:none;">
-                <h3 id="arName" style="margin:0;">MY STORE</h3>
-                <p>----------------</p><p id="arDate"></p><p id="arDet"></p><h3 id="arTot"></h3><p>TERIMA KASIH</p>
-            </div>
+            // --- SETTINGS SAVE FIXED ---
+            svS: () => { 
+                db.c.key=$('skKey').value.trim(); 
+                db.c.limit=$('skLim').value; 
+                app.sv(); 
+                $('setModal').style.display='none'; 
+                alert("Pengaturan Disimpan");
+            },
+            
+            svT: () => { db.c.target=parseFloat($('tVal').value); app.sv(); alert('Target Updated'); },
+            nuke: () => { if(confirm("Hapus SEMUA data?")) { localStorage.clear(); location.reload(); } },
+            qc: () => { const c=parseFloat($('cC').value)||0, p=parseFloat($('cP').value)||0; $('cRes').innerText=fmt(c+(c*(p/100))); },
 
-            <button class="btn-black" onclick="saveAdm()" style="background:var(--primary-blue);">Simpan & Kirim</button>
-            <div style="display:flex; gap:10px; margin-top:15px;">
-                <button class="btn-action" style="background:#1F2937; color:white;" onclick="printAdm()"><span class="material-icons-round">print</span></button>
-                <button class="btn-action" style="background:#25D366; color:white;" onclick="wa('adm')"><span class="material-icons-round">share</span></button>
-            </div>
-        </div>
-    </div>
+            // AI
+            ask: async () => {
+                let i=$('aiIn'), m=i.value, b=$('cBox'); if(!m)return; i.value='';
+                b.innerHTML+=`<div class="msg-bubble msg-user">${m}</div>`;
+                if(!db.c.key) { b.innerHTML+=`<div class="msg-bubble msg-ai" style="color:red">API Key belum diisi.</div>`; return; }
+                const ctx = `Profit:${$('rNet').innerText}, Cash:${$('bCash').innerText}.`;
+                try {
+                    let r = await fetch("https://api.groq.com/openai/v1/chat/completions", { 
+                        method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${db.c.key}`}, 
+                        body:JSON.stringify({model:"llama-3.3-70b-versatile", messages:[{role:"system",content:`Context: Bisnis user. Data: ${ctx}. Jawab singkat.`},{role:"user",content:m}]}) 
+                    });
+                    let j = await r.json(); b.innerHTML+=`<div class="msg-bubble msg-ai">${j.choices[0].message.content}</div>`;
+                    b.scrollTop = b.scrollHeight;
+                } catch(e) { b.innerHTML+=`<div class="msg-bubble msg-ai" style="color:red">Error: ${e.message}</div>`; }
+            },
+            askHPP: async () => {
+                let m=$('hppIn').value, b=$('hppRes'); if(!m)return;
+                b.innerHTML = '<div style="color:var(--p)">Sedang menghitung...</div>';
+                if(!db.c.key) { b.innerHTML=`<div style="color:red">API Key belum diisi.</div>`; return; }
+                try {
+                    let r = await fetch("https://api.groq.com/openai/v1/chat/completions", { 
+                        method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${db.c.key}`}, 
+                        body:JSON.stringify({model:"llama-3.3-70b-versatile", messages:[{role:"system",content:"Anda Akuntan. Hitung HPP, Total, Saran Harga (Margin 30%). HTML Format."}, {role:"user",content:m}]}) 
+                    });
+                    let j = await r.json(); b.innerHTML=`<div style="background:#f0f9ff; padding:15px; border-radius:10px; border:1px solid #bae6fd">${j.choices[0].message.content}</div>`;
+                } catch(e) { b.innerHTML=`<div style="color:red">Gagal menghitung.</div>`; }
+            },
 
-    <!-- MODAL AI CHAT -->
-    <div id="aiModal">
-        <div class="ai-chat-box">
-            <div class="ai-header">
-                <span><span class="material-icons-round" style="font-size:16px; margin-right:5px; vertical-align:middle;">psychology</span> Asisten Toko</span>
-                <span class="material-icons-round" onclick="document.getElementById('aiModal').style.display='none'" style="cursor:pointer;">close</span>
-            </div>
-            <div class="ai-messages" id="chatBox">
-                <div class="msg-bubble msg-ai">Halo! Saya asisten AI untuk toko Anda. Tanyakan tentang penjualan, prediksi, atau tips bisnis.</div>
-            </div>
-            <div class="typing-dots" id="typingDots">Sedang mengetik...</div>
-            <div class="ai-input-area">
-                <input type="text" id="aiInput" class="clean-input" placeholder="Tanya sesuatu..." style="padding:10px;">
-                <button onclick="sendAIChat()" style="background:var(--accent-blue); color:white; border:none; border-radius:10px; width:40px; cursor:pointer;"><span class="material-icons-round">send</span></button>
-            </div>
-        </div>
-    </div>
-
-    <script type="module">
-        // CONFIG
-        const EMAIL_KEY="xSpKdFWQH1eni9QVG", EMAIL_SVC="Service_j3daxhc", EMAIL_TMP="template_0sph0gy";
-        const firebaseConfig = { apiKey: "AIzaSyBpwNPIYhelOhkPvJsBmKvlZnaH9FVnmM4", authDomain: "pom-mini-50b1e.firebaseapp.com", projectId: "pom-mini-50b1e", storageBucket: "pom-mini-50b1e.firebasestorage.app", messagingSenderId: "77499696502", appId: "1:77499696502:web:8080c37da62a12c9566657", measurementId: "G-KRRHTTGBRF" };
-        
-        let db; try{ firebase.initializeApp(firebaseConfig); db=firebase.firestore(); }catch(e){}
-        emailjs.init(EMAIL_KEY);
-
-        // DATA INIT
-        let data = JSON.parse(localStorage.getItem('dl_data')) || { pass: "DearLove2025", store: "DEAR LOVE", addr: "Jl. Raya", price: 10000, admin: "Admin Owner", photo: "logo.png", groqKey: "", trans: [] };
-
-        // --- GROQ AI LOGIC ---
-        const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-        
-        // Helper: Call Groq API
-        async function callGroq(messages) {
-            if(!data.groqKey) return "API Key Groq belum diatur di Pengaturan.";
-            try {
-                const response = await fetch(GROQ_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${data.groqKey}` },
-                    body: JSON.stringify({
-                        model: "llama3-8b-8192", // Model cepat & ringan
-                        messages: messages,
-                        temperature: 0.7
-                    })
+            // Render
+            rP: (arr) => {
+                $('lProd').innerHTML = arr.map(x => `
+                <div class="list-item">
+                    <div><b>${x.n}</b><div style="font-size:0.75rem; color:var(--gry)">Modal: ${fmt(x.b)} | Jual: ${fmt(x.s)}</div></div>
+                    <div style="text-align:right"><span class="badge ${x.q<=db.c.limit?'bg-red':'bg-green'}">Stok: ${x.q}</span><br><button onclick="app.sell(${x.id})" style="margin-top:5px; border:none; background:transparent; color:var(--p); font-weight:700; cursor:pointer">JUAL</button></div>
+                </div>`).join('');
+            },
+            ren: () => {
+                let s=0, cogs=0, exp=0, cash=0, ast=0, liab=0, eq=0;
+                db.t.forEach(x => {
+                    if(x.c==='Pendapatan'){s+=x.dr; cash+=x.dr} else if(x.c==='Beban'){exp+=x.cr; cash-=x.cr}
+                    else if(x.c==='HPP'){cogs+=x.cr} else if(x.c==='Aset'){ast+=x.cr; cash-=x.cr}
+                    else if(x.c==='Kewajiban'){liab+=x.dr; cash+=x.dr} else if(x.c==='Ekuitas'){eq+=x.dr; cash+=x.dr}
                 });
-                const json = await response.json();
-                if(json.error) return "Error Groq: " + json.error.message;
-                return json.choices[0].message.content;
-            } catch (e) { return "Gagal menghubungi AI. Cek koneksi."; }
-        }
+                const sv = db.p.reduce((a,b)=>a+(b.q*b.b),0);
+                const net = s-cogs-exp; const tot = cash+sv+ast;
 
-        // Feature 1: AI Insight (Dashboard)
-        window.generateInsight = async () => {
-            const btn = document.querySelector('#aiInsightBox button');
-            const txt = document.getElementById('aiText');
-            btn.innerText = "Menganalisis..."; btn.disabled = true;
+                $('dAsset').innerText=fmt(tot); $('dSale').innerText=fmt(s); $('dNet').innerText=fmt(net);
+                const tp = Math.min((s/db.c.target)*100,100).toFixed(1);
+                $('tPct').innerText=tp+'%'; $('tBar').style.width=tp+'%'; $('tCur').innerText=fmt(s); $('tMax').innerText='Target: '+fmt(db.c.target);
 
-            // Prepare Summary Data
-            let today = new Date().toLocaleDateString();
-            let dTrans = data.trans.filter(t=>t.date===today);
-            let dInc = dTrans.reduce((a,b)=>a+b.n,0);
-            let totalHist = data.trans.length;
-            
-            let prompt = `Kamu adalah asisten bisnis Pom Mini. Data hari ini: Penjualan Rp${dInc}, Total transaksi ${dTrans.length}. Total riwayat ${totalHist} transaksi. Berikan analisis singkat 2 kalimat: 1 tentang performa hari ini, 1 saran singkat untuk besok. Gunakan bahasa santai tapi profesional.`;
+                const low = db.p.filter(x=>x.q<=db.c.limit);
+                $('lowStockList').innerHTML = low.length ? low.map(x=>`<span class="badge bg-red">${x.n}: ${x.q}</span>`).join('') : '<small style="color:var(--gry)">Stok Aman.</small>';
 
-            let res = await callGroq([{role: "system", content: "Kamu ahli bisnis ritel BBM."}, {role: "user", content: prompt}]);
-            
-            txt.innerText = res;
-            btn.innerText = "Analisa Lagi"; btn.disabled = false;
-        }
+                $('rSale').innerText=fmt(s); $('rCogs').innerText='('+fmt(cogs)+')'; $('rExp').innerText='('+fmt(exp)+')'; $('rNet').innerText=fmt(net);
+                $('bCash').innerText=fmt(cash); $('bInv').innerText=fmt(sv); $('bLiab').innerText=fmt(liab); $('bEq').innerText=fmt(tot-liab);
 
-        // Feature 2: AI Chat
-        window.openAIChat = () => { document.getElementById('aiModal').style.display='flex'; }
-        
-        window.sendAIChat = async () => {
-            let inp = document.getElementById('aiInput');
-            let msg = inp.value; if(!msg) return;
-            
-            // UI User
-            let box = document.getElementById('chatBox');
-            box.innerHTML += `<div class="msg-bubble msg-user">${msg}</div>`;
-            inp.value = ''; 
-            box.scrollTop = box.scrollHeight;
-            document.getElementById('typingDots').style.display='block';
+                $('lTrans').innerHTML = db.t.slice().reverse().slice(0,10).map(x => {
+                    const isIn=['Pendapatan','Kewajiban','Ekuitas'].includes(x.c);
+                    return `<div class="list-item"><div><b>${x.ds}</b><div style="font-size:0.7rem; color:var(--gry)">${x.dt} • ${x.c}</div></div><b style="color:${isIn?'var(--suc)':'var(--txt)'}">${isIn?'+':'-'} ${fmt(x.dr||x.cr)}</b></div>`;
+                }).join('');
+                
+                app.rP(db.p);
+                $('lDebt').innerHTML = db.d.map(x => `<div class="list-item"><div><span class="badge ${x.t==='Hutang'?'bg-red':'bg-green'}">${x.t}</span> <b>${x.n}</b><br><small>${fmt(x.a)}</small></div><button onclick="app.togD(${x.id})" class="badge" style="border:none; cursor:pointer; background:${x.s?'var(--suc)':'var(--border)'}; color:${x.s?'white':'var(--txt)'}">${x.s?'Lunas':'Belum'}</button></div>`).join('');
+                
+                $('tVal').value = db.c.target;
+            }
+        };
 
-            // Prepare Context
-            let last7 = data.trans.slice(0, 10).map(t=>`${t.date}: Rp${t.n}`).join(", ");
-            let sysMsg = `Kamu adalah Asisten Pintar Pom Mini. Nama Toko: ${data.store}. Harga BBM: Rp${data.price}/Liter. Data 10 transaksi terakhir: [${last7}]. Jawab pertanyaan user berdasarkan data ini. Jika user tanya hal umum, jawab dengan ramah. Gunakan format Markdown jika perlu.`;
-
-            // Call API
-            let res = await callGroq([{role: "system", content: sysMsg}, {role: "user", content: msg}]);
-            
-            // UI AI
-            document.getElementById('typingDots').style.display='none';
-            // Parse Markdown simple
-            let cleanRes = marked.parse(res);
-            box.innerHTML += `<div class="msg-bubble msg-ai">${cleanRes}</div>`;
-            box.scrollTop = box.scrollHeight;
-        }
-
-
-        // --- EXISTING LOGIC ---
-
-        // NAV
-        window.onload = () => { if(localStorage.getItem('dl_log')==='1') nav('adminScreen'); }
-        window.nav = (id) => {
-            document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            if(id==='adminScreen') renderDash();
-            if(id==='publicScreen') { document.getElementById('pubName').value="POM MINI"; document.getElementById('pubAddr').value="Indonesia"; updRec('pub'); }
-        }
-        window.switchTab = (tid, el) => {
-            document.querySelectorAll('.tab-content').forEach(t=>t.style.display='none');
-            document.getElementById(tid).style.display='block';
-            document.querySelectorAll('.nav-btn').forEach(n=>n.classList.remove('active'));
-            if(el) el.classList.add('active');
-            if(tid==='tabRep') renderChart();
-        }
-
-        // AUTH
-        window.checkLogin = () => { if(localStorage.getItem('dl_log')==='1') nav('adminScreen'); else nav('loginScreen'); }
-        window.doLogin = () => { if(document.getElementById('passInput').value===data.pass) { localStorage.setItem('dl_log','1'); nav('adminScreen'); } else alert("Salah!"); }
-        window.doLogout = () => { localStorage.removeItem('dl_log'); nav('menuScreen'); }
-        window.forgotPass = () => { emailjs.send(EMAIL_SVC, EMAIL_TMP, { to_email:"asefaja140504@gmail.com", message:data.pass }).then(()=>alert("Cek Email")).catch(()=>alert("Gagal")); }
-
-        // ADMIN
-        window.openInputModal = () => { document.getElementById('inputModal').style.display='flex'; }
-        window.closeModal = () => { document.getElementById('inputModal').style.display='none'; }
-        
-        window.renderDash = () => {
-            document.getElementById('dispAdminName').innerText=data.admin;
-            document.getElementById('dispPhoto').src=data.photo;
-            document.getElementById('settingPhoto').src=data.photo;
-            document.getElementById('setStore').value=data.store;
-            document.getElementById('setAddr').value=data.addr;
-            document.getElementById('setPrice').value=data.price;
-            document.getElementById('setAdmin').value=data.admin;
-            document.getElementById('setGroqKey').value = data.groqKey || ""; // Load Key
-
-            let today = new Date().toLocaleDateString();
-            let dTrans = data.trans.filter(t=>t.date===today);
-            let dInc = dTrans.reduce((a,b)=>a+b.n,0);
-            let dLit = dTrans.reduce((a,b)=>a+parseFloat(b.l),0);
-            
-            document.getElementById('dailyInc').innerText="Rp "+dInc.toLocaleString();
-            document.getElementById('dailyLit').innerText=dLit.toFixed(2)+" L Terjual Hari Ini";
-
-            let html = "";
-            data.trans.slice(0,20).forEach(t=>{
-                html += `<div class="trans-item">
-                    <div class="ti-left">
-                        <div class="ti-icon"><span class="material-icons-round">local_gas_station</span></div>
-                        <div class="ti-info"><h4>Penjualan</h4><p>${t.date} ${t.time} • ${t.l}L</p></div>
-                    </div>
-                    <div class="ti-amount">+Rp ${t.n.toLocaleString()}</div>
-                </div>`;
-            });
-            document.getElementById('recentList').innerHTML = html || "<p style='text-align:center;color:#ccc'>Belum ada data</p>";
-            document.getElementById('fullHistory').innerHTML = html;
-            renderChart();
-        }
-
-        window.calcAdm = () => {
-            let n=parseInt(document.getElementById('admNom').value)||0;
-            let l=(n/data.price).toFixed(2);
-            document.getElementById('admLit').innerText=l+" L";
-            updRec('adm',n,l,data.price);
-        }
-
-        window.saveAdm = async () => {
-            let n = parseInt(document.getElementById('admNom').value);
-            if(!n) return;
-            let l = (n/data.price).toFixed(2);
-            let now = new Date();
-            data.trans.unshift({ id:Date.now(), ts:now.getTime(), date:now.toLocaleDateString(), time:now.toLocaleTimeString(), n:n, l:l });
-            localStorage.setItem('dl_data', JSON.stringify(data));
-            try{ if(db) await db.collection("struk_public").doc("current").set({ nominal:n, liter:l, shop:data.store, address:data.addr, waktu:now.toLocaleString(), timestamp:firebase.firestore.FieldValue.serverTimestamp() }); }catch(e){}
-            document.getElementById('admNom').value=''; closeModal(); renderDash();
-        }
-
-        window.printAdm = () => { let a=document.getElementById('adminReceiptArea'); a.style.display='block'; window.print(); a.style.display='none'; }
-
-        window.renderChart = () => {
-            let daily=[0,0,0,0,0,0,0], wTot=0, now=new Date();
-            data.trans.forEach(t=>{
-                let diff = Math.floor((now - t.ts)/(1000*60*60*24));
-                if(diff<7) { daily[6-diff]+=t.n; wTot+=t.n; }
-            });
-            let max=Math.max(...daily)||1;
-            document.getElementById('chartBox').innerHTML = daily.map((v,i)=>`<div class="bar ${i===6?'today':''}" style="height:${(v/max)*100}%"><span class="bar-val">${(v/1000).toFixed(0)}k</span></div>`).join('');
-            document.getElementById('weekTotal').innerText="Rp "+wTot.toLocaleString();
-
-            let curM = now.getMonth();
-            let mTrans = data.trans.filter(t=>new Date(t.ts).getMonth()===curM);
-            let mTot = mTrans.reduce((a,b)=>a+b.n,0);
-            document.getElementById('monthTotal').innerText="Rp "+mTot.toLocaleString();
-            document.getElementById('monthList').innerHTML = mTrans.map(t=>`<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px dashed #eee;font-size:12px;"><span>${t.date}</span><b>Rp ${t.n.toLocaleString()}</b></div>`).join('');
-        }
-
-        // PUBLIC
-        window.calcPub = () => {
-            let p=parseInt(document.getElementById('pubPrice').value)||10000;
-            let n=parseInt(document.getElementById('pubNom').value)||0;
-            let l=(n/p).toFixed(2);
-            document.getElementById('pubLit').innerText=l+" L";
-            updRec('pub',n,l,p);
-        }
-        window.updRec = (mode,n=0,l=0,p=10000) => {
-            let prefix = mode==='pub'?'r':'ar';
-            let nm = mode==='pub'?document.getElementById('pubName').value:data.store;
-            let ad = mode==='pub'?document.getElementById('pubAddr').value:data.addr;
-            document.getElementById(prefix+'Name').innerText=nm||"POM";
-            document.getElementById(prefix+'Addr').innerText=ad||"Indonesia";
-            document.getElementById(prefix+'Date').innerText=new Date().toLocaleDateString();
-            document.getElementById(prefix+'Time').innerText=new Date().toLocaleTimeString();
-            document.getElementById(prefix+'Det').innerText=`${l} L x ${p}`;
-            document.getElementById(prefix+'Tot').innerText=n.toLocaleString();
-            document.getElementById(prefix+'Big').innerText="Rp "+n.toLocaleString();
-        }
-        window.wa = (mode) => {
-            let nm = mode==='pub' ? document.getElementById('rName').innerText : data.store;
-            let n = mode==='pub' ? document.getElementById('pubNom').value : document.getElementById('admNom').value;
-            window.open(`https://wa.me/?text=*${nm}*%0ATotal: Rp ${n}`, '_blank');
-        }
-
-        // SETTING
-        window.updatePhoto = (e) => {
-            let f=e.target.files[0]; if(f){ let r=new FileReader(); r.onload=(v)=>{ data.photo=v.target.result; renderDash(); }; r.readAsDataURL(f); }
-        }
-        window.saveSet = () => {
-            data.store=document.getElementById('setStore').value;
-            data.addr=document.getElementById('setAddr').value;
-            data.price=parseInt(document.getElementById('setPrice').value);
-            data.admin=document.getElementById('setAdmin').value;
-            data.groqKey=document.getElementById('setGroqKey').value; // Save Groq Key
-            let np=document.getElementById('setPass').value; if(np) data.pass=np;
-            localStorage.setItem('dl_data', JSON.stringify(data));
-            alert("Disimpan! AI siap digunakan jika API Key valid.");
-        }
-        window.clearData = () => { if(confirm("Hapus?")) { data.trans=[]; localStorage.setItem('dl_data', JSON.stringify(data)); renderDash(); } }
+        // Init
+        $('fTrans').addEventListener('submit', app.addT); $('fProd').addEventListener('submit', app.addP); $('fDebt').addEventListener('submit', app.addD);
+        $('tDate').value = now(); app.ren();
     </script>
 </body>
 </html>
-
