@@ -2,429 +2,422 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Business Pro (Settings Fixed)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>POM CPU PRO v11.2</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     
     <style>
-        :root {
-            --p: #2563eb; --bg: #f8fafc; --w: #ffffff; --txt: #0f172a; --gry: #64748b;
-            --bd: #e2e8f0; --suc: #10b981; --err: #ef4444; --warn: #f59e0b;
-            --rad: 20px; --shd: 0 4px 20px -5px rgba(0,0,0,0.05);
+        /* --- GLOBAL --- */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        body { margin: 0; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; background: #121212; color: white; }
+
+        /* HEADER */
+        .status-bar {
+            position: absolute; top: 0; left: 0; right: 0; height: 50px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 15px; z-index: 100;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
         }
-        * { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans',sans-serif; -webkit-tap-highlight-color:transparent; }
-        body { background:var(--bg); color:var(--txt); padding-bottom:100px; max-width:500px; margin:0 auto; min-height:100vh; font-size:14px; }
-
-        /* HEADER & HERO */
-        .header { background:var(--w); padding:15px 20px; position:sticky; top:0; z-index:50; border-bottom:1px solid var(--bd); display:flex; justify-content:space-between; align-items:center; }
-        .icon-btn { width:36px; height:36px; border-radius:50%; border:1px solid var(--bd); background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--txt); }
-        .hero { margin:20px; background:linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); padding:25px; border-radius:24px; color:white; box-shadow:0 8px 25px -5px rgba(37,99,235,0.4); }
-        .hero h1 { font-size:2rem; font-weight:800; margin:5px 0; letter-spacing:-1px; }
-
-        /* CARDS & GRID */
-        .container { padding:0 20px; }
-        .card { background:var(--w); border-radius:var(--rad); padding:18px; box-shadow:var(--shd); margin-bottom:15px; border:1px solid rgba(255,255,255,0.8); }
-        .grid-menu { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
-        .menu-item { background:var(--w); padding:12px 5px; border-radius:14px; border:1px solid var(--bd); text-align:center; cursor:pointer; transition:0.2s; }
-        .menu-item:active { transform:scale(0.95); border-color:var(--p); background:#eff6ff; }
-        .menu-item i { font-size:1.2rem; color:var(--p); margin-bottom:6px; display:block; }
-        .menu-item span { font-size:0.65rem; font-weight:600; }
-
-        /* INPUTS & BUTTONS */
-        .form-group { margin-bottom:15px; }
-        .label { display:block; font-size:0.8rem; color:var(--gry); margin-bottom:6px; font-weight:600; }
-        .input { width:100%; padding:12px; border-radius:12px; border:1px solid var(--bd); background:#f8fafc; outline:none; font-size:0.95rem; }
-        .input:focus { border-color:var(--p); background:#fff; }
-        .btn { width:100%; padding:14px; border-radius:12px; background:var(--p); color:white; border:none; font-weight:700; cursor:pointer; font-size:1rem; box-shadow:0 4px 15px rgba(37,99,235,0.2); }
-        .btn:active { transform:scale(0.98); }
-
-        /* CHAT BOX (Gaya DEAR LOVE) */
-        .chat-box { height:60vh; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:12px; }
-        .msg-bubble { padding:10px 15px; border-radius:12px; font-size:13px; line-height:1.5; max-width:85%; }
-        .msg-user { background:var(--p); color:white; align-self:flex-end; border-bottom-right-radius:2px; }
-        .msg-ai { background:white; border:1px solid var(--bd); color:var(--txt); align-self:flex-start; border-bottom-left-radius:2px; }
+        .conn-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
+        .conn-dot.offline { background: #ef4444; box-shadow: none; }
         
-        /* UTILS */
-        .chips { display:flex; gap:8px; overflow-x:auto; padding-bottom:5px; }
-        .chip-lbl { white-space:nowrap; padding:8px 16px; border-radius:20px; border:1px solid var(--bd); font-size:0.8rem; font-weight:600; cursor:pointer; background:var(--w); }
-        input[type="radio"]:checked + .chip-lbl { background:var(--txt); color:white; border-color:var(--txt); }
-        .list-item { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #f1f5f9; }
-        .badge { padding:4px 10px; border-radius:8px; font-size:0.7rem; font-weight:700; }
-        .bg-green { background:#dcfce7; color:#166534; } .bg-red { background:#fee2e2; color:#991b1b; }
+        .btn-switch {
+            background: rgba(255,255,255,0.15); backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.2); color: white;
+            padding: 6px 12px; border-radius: 20px; font-size: 10px; font-weight: bold;
+            display: flex; align-items: center; gap: 5px; cursor: pointer;
+        }
 
-        /* NAVIGATION & MODAL */
-        .nav-bar { position:fixed; bottom:0; left:0; width:100%; background:rgba(255,255,255,0.95); backdrop-filter:blur(10px); border-top:1px solid var(--bd); padding:10px 0 25px; display:flex; justify-content:space-around; z-index:100; }
-        .nav-icon { text-align:center; width:20%; color:var(--gry); cursor:pointer; }
-        .nav-icon.active { color:var(--p); }
-        .nav-icon i { font-size:1.4rem; margin-bottom:4px; display:block; }
-        .nav-icon span { font-size:0.6rem; font-weight:700; }
-
-        .section { display:none; animation:fade .3s ease; } .section.active { display:block; }
-        @keyframes fade { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        /* --- VIEW 1: MESIN (DEFAULT) --- */
+        #viewMesin { height: 100%; display: flex; flex-direction: column; }
         
-        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:200; align-items:center; justify-content:center; backdrop-filter:blur(3px); }
-        .modal-content { background:var(--w); width:85%; padding:20px; border-radius:20px; box-shadow:0 10px 40px rgba(0,0,0,0.2); }
+        .lcd-area {
+            background: #000; padding: 60px 20px 20px;
+            border-bottom: 4px solid #dc2626;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .lcd-panel {
+            background: #263238; border: 6px solid #37474f; border-radius: 10px; padding: 15px;
+            font-family: 'Share Tech Mono', monospace; display: flex; flex-direction: column; gap: 5px;
+        }
+        .lcd-row { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px dashed rgba(76, 175, 80, 0.3); }
+        
+        /* Warna LCD Normal (Hijau) */
+        .lcd-lbl { font-size: 14px; color: #4caf50; opacity: 0.8; }
+        .lcd-val { font-size: 36px; color: #4caf50; text-shadow: 0 0 10px rgba(76, 175, 80, 0.4); }
+        .lcd-val.sm { font-size: 24px; }
+
+        /* Warna LCD Mode Menu (Kuning) */
+        .menu-mode .lcd-lbl { color: #f59e0b; }
+        .menu-mode .lcd-val { color: #f59e0b; text-shadow: 0 0 10px rgba(245, 158, 11, 0.4); }
+
+        .keypad-area { flex: 1; background: #1e1e1e; padding: 20px; display: flex; flex-direction: column; justify-content: center; }
+        .info-bar { text-align: center; font-size: 10px; color: #555; margin-bottom: 15px; font-family: 'Share Tech Mono'; }
+        
+        .keys-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; height: 100%; max-height: 400px; }
+        .key {
+            background: #333; border: none; border-radius: 10px; color: white;
+            font-family: 'Inter', sans-serif; font-size: 24px; font-weight: 800;
+            box-shadow: 0 5px 0 #111; cursor: pointer; position: relative;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .key:active { transform: translateY(5px); box-shadow: none; }
+        .key.c { background: #f59e0b; color: black; }
+        .key.ent { background: #dc2626; grid-row: span 2; font-size: 18px; }
+        .key.p { font-size: 14px; background: #424242; }
+
+        /* --- VIEW 2: ADMIN (HIDDEN) --- */
+        #viewAdmin { display: none; height: 100%; background: #F2F4F7; color: #1e293b; overflow-y: auto; position: relative; }
+        
+        .adm-head { background: white; padding: 70px 20px 20px; border-bottom: 1px solid #eee; }
+        .adm-title { font-size: 24px; font-weight: 900; color: #1e293b; }
+        
+        .card { background: white; padding: 20px; border-radius: 20px; margin: 15px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+        .card-val { font-size: 32px; font-weight: 800; color: #7F3DFF; margin: 5px 0; }
+        .card-lbl { font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px; }
+        .box { background: white; padding: 15px; border-radius: 15px; }
+        
+        .history-list { padding: 20px; padding-bottom: 50px; }
+        .h-item { display: flex; justify-content: space-between; padding: 15px; background: white; border-radius: 12px; margin-bottom: 8px; border: 1px solid #eee; }
+
     </style>
 </head>
 <body>
 
-    <div id="home" class="section active">
-        <div class="header">
-            <h3>Bisnis<span style="color:var(--p)">Pro</span></h3>
-            <button class="icon-btn" onclick="ui.modal('setModal')"><i class="fas fa-cog"></i></button>
+    <div class="status-bar">
+        <div class="conn-dot" id="connDot"></div>
+        <div class="btn-switch" onclick="switchMode()">
+            <span class="material-icons-round" style="font-size:16px;">admin_panel_settings</span>
+            <span id="btnText">ADMIN</span>
         </div>
-        <div class="hero">
-            <span style="opacity:0.9; font-size:0.85rem">Total Aset Bersih</span>
-            <h1 id="dAsset">Rp 0</h1>
-            <div style="margin-top:10px; font-size:0.8rem; display:flex; gap:15px; opacity:0.9">
-                <span><i class="fas fa-arrow-up"></i> <span id="dSale">0</span></span>
-                <span><i class="fas fa-wallet"></i> <span id="dNet">0</span></span>
-            </div>
-        </div>
-        <div class="container">
-            <div class="label" style="margin:20px 0 10px">MENU UTAMA</div>
-            <div class="grid-menu">
-                <div class="menu-item" onclick="ui.nav('hpp')"><i class="fas fa-magic"></i><span>AI HPP</span></div>
-                <div class="menu-item" onclick="ui.nav('debt')"><i class="fas fa-book"></i><span>Hutang</span></div>
-                <div class="menu-item" onclick="ui.nav('target')"><i class="fas fa-bullseye"></i><span>Target</span></div>
-                <div class="menu-item" onclick="ui.nav('calc')"><i class="fas fa-calculator"></i><span>Margin</span></div>
-            </div>
-            
-            <div class="label" style="margin:20px 0 10px; display:flex; justify-content:space-between">
-                <span>TARGET BULANAN</span> <span id="tPct" style="color:var(--p)">0%</span>
-            </div>
-            <div class="card" style="padding:15px">
-                <div style="background:#f1f5f9; height:8px; border-radius:4px; overflow:hidden">
-                    <div id="tBar" style="width:0%; height:100%; background:var(--p); transition:1s"></div>
+    </div>
+
+    <div id="viewMesin">
+        <div class="lcd-area">
+            <div class="lcd-panel" id="lcdPanel">
+                <div class="lcd-row">
+                    <span class="lcd-lbl" id="lbl1">HARGA</span>
+                    <span class="lcd-val sm" id="val1">10000</span>
                 </div>
-                <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-top:8px; color:var(--gry)">
-                    <span id="tCur">0</span> <span id="tMax">Target: 0</span>
+                <div class="lcd-row">
+                    <span class="lcd-lbl" id="lbl2">LITER</span>
+                    <span class="lcd-val" id="val2">0.00</span>
                 </div>
-            </div>
-
-            <div class="label" style="margin:20px 0 10px">STOK MENIPIS</div>
-            <div class="card" id="lowStockList" style="display:flex; flex-wrap:wrap; gap:5px; min-height:50px">
-                <small style="color:var(--gry)">Aman terkendali.</small>
-            </div>
-        </div>
-    </div>
-
-    <div id="trans" class="section">
-        <div class="header"><h3>Input Transaksi</h3></div>
-        <div class="container" style="padding-top:20px">
-            <div class="card">
-                <form id="fTrans">
-                    <div class="form-group"><span class="label">Tanggal</span><input type="date" id="tDate" class="input" required></div>
-                    <div class="form-group"><span class="label">Deskripsi</span><input type="text" id="tDesc" class="input" placeholder="Cth: Bayar Listrik" required></div>
-                    <div class="form-group chips">
-                        <label><input type="radio" name="tCat" value="Pendapatan" checked hidden><div class="chip-lbl">Masuk</div></label>
-                        <label><input type="radio" name="tCat" value="Beban" hidden><div class="chip-lbl">Keluar</div></label>
-                        <label><input type="radio" name="tCat" value="Aset" hidden><div class="chip-lbl">Aset</div></label>
-                        <label><input type="radio" name="tCat" value="Kewajiban" hidden><div class="chip-lbl">Hutang</div></label>
-                        <label><input type="radio" name="tCat" value="Ekuitas" hidden><div class="chip-lbl">Modal</div></label>
-                    </div>
-                    <div class="form-group"><span class="label">Nominal (Rp)</span><input type="number" id="tNom" class="input" placeholder="0" required></div>
-                    <button type="submit" class="btn">Simpan Data</button>
-                </form>
-            </div>
-            <div class="label">RIWAYAT TERAKHIR</div>
-            <div id="lTrans" style="padding-bottom:80px"></div>
-        </div>
-    </div>
-
-    <div id="prod" class="section">
-        <div class="header" style="gap:10px">
-            <input type="text" id="pSrc" class="input" placeholder="Cari barang..." onkeyup="app.filP()" style="padding:10px">
-        </div>
-        <div class="container" style="padding-top:20px">
-            <div class="card" style="padding:10px 15px">
-                <details>
-                    <summary style="font-weight:700; color:var(--p); cursor:pointer"> + Tambah Produk Baru</summary>
-                    <form id="fProd" style="margin-top:15px; border-top:1px solid var(--border); padding-top:15px">
-                        <div class="form-group"><input id="pN" class="input" placeholder="Nama Produk" required></div>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px" class="form-group">
-                            <input type="number" id="pB" class="input" placeholder="Harga Beli">
-                            <input type="number" id="pS" class="input" placeholder="Harga Jual">
-                        </div>
-                        <div class="form-group"><input type="number" id="pQ" class="input" placeholder="Stok Awal"></div>
-                        <button type="submit" class="btn">Simpan</button>
-                    </form>
-                </details>
-            </div>
-            <div id="lProd" style="padding-bottom:80px"></div>
-        </div>
-    </div>
-
-    <div id="rep" class="section">
-        <div class="header"><h3>Laporan</h3></div>
-        <div class="container" style="padding-top:20px">
-            <div class="card">
-                <h4 style="margin-bottom:15px">Laba Rugi</h4>
-                <div class="list-item"><span>Penjualan</span><b style="color:var(--suc)" id="rSale">0</b></div>
-                <div class="list-item"><span>HPP (Modal)</span><b style="color:var(--err)" id="rCogs">0</b></div>
-                <div class="list-item"><span>Beban Ops</span><b style="color:var(--err)" id="rExp">0</b></div>
-                <div style="background:var(--txt); color:white; padding:15px; border-radius:12px; margin-top:10px; display:flex; justify-content:space-between">
-                    <span>Laba Bersih</span> <b id="rNet">0</b>
-                </div>
-            </div>
-            <div class="card">
-                <h4 style="margin-bottom:15px">Neraca</h4>
-                <div class="list-item"><span>Kas Tunai</span><b id="bCash">0</b></div>
-                <div class="list-item"><span>Nilai Stok</span><b id="bInv">0</b></div>
-                <div class="list-item"><span>Hutang</span><b id="bLiab">0</b></div>
-                <div class="list-item"><span>Ekuitas</span><b id="bEq">0</b></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="ai" class="section">
-        <div class="header"><h3>AI Konsultan</h3></div>
-        <div class="container" style="height:calc(100vh - 140px); display:flex; flex-direction:column; padding-top:10px">
-            <div id="cBox" class="chat-box" style="flex:1">
-                <div class="msg-bubble msg-ai">Halo! Saya siap menganalisis data keuangan Anda. Pastikan API Key Groq sudah diisi di menu Pengaturan (Gear) ya.</div>
-            </div>
-            <div style="display:flex; gap:10px; padding:15px 0">
-                <input id="aiIn" class="input" placeholder="Ketik pertanyaan...">
-                <button onclick="app.ask()" style="width:50px; background:var(--txt); color:white; border:none; border-radius:12px"><i class="fas fa-paper-plane"></i></button>
-            </div>
-        </div>
-    </div>
-
-    <div id="hpp" class="section">
-        <div class="header"><button class="icon-btn" onclick="ui.nav('home')"><i class="fas fa-arrow-left"></i></button><h3>AI Kalkulator HPP</h3></div>
-        <div class="container" style="padding-top:20px">
-            <div class="card">
-                <span class="label">Ceritakan Resepnya</span>
-                <textarea id="hppIn" class="input" rows="5" placeholder="Cth: Kopi susu. Susu 1L 20rb pake 100ml, Kopi 1kg 80rb pake 15gr, Cup 500 perak."></textarea>
-                <button onclick="app.askHPP()" class="btn" style="margin-top:15px"><i class="fas fa-magic"></i> Hitung Otomatis</button>
-                <div id="hppRes" style="margin-top:15px; font-size:0.9rem; line-height:1.6"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="debt" class="section">
-        <div class="header"><button class="icon-btn" onclick="ui.nav('home')"><i class="fas fa-arrow-left"></i></button><h3>Buku Hutang</h3></div>
-        <div class="container" style="padding-top:20px">
-            <div class="card">
-                <form id="fDebt">
-                    <div class="form-group chips">
-                        <label><input type="radio" name="dT" value="Piutang" checked hidden><div class="chip-lbl">Piutang</div></label>
-                        <label><input type="radio" name="dT" value="Hutang" hidden><div class="chip-lbl">Hutang</div></label>
-                    </div>
-                    <div class="form-group"><input id="dN" class="input" placeholder="Nama" required></div>
-                    <div class="form-group"><input type="number" id="dA" class="input" placeholder="Jumlah" required></div>
-                    <button type="submit" class="btn">Simpan</button>
-                </form>
-            </div>
-            <div id="lDebt"></div>
-        </div>
-    </div>
-
-    <div id="target" class="section">
-        <div class="header"><button class="icon-btn" onclick="ui.nav('home')"><i class="fas fa-arrow-left"></i></button><h3>Target</h3></div>
-        <div class="container" style="padding-top:20px">
-            <div class="card">
-                <span class="label">Set Target Omzet</span>
-                <input type="number" id="tVal" class="input" style="margin-bottom:15px">
-                <button onclick="app.svT()" class="btn">Update Target</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="calc" class="section">
-        <div class="header"><button class="icon-btn" onclick="ui.nav('home')"><i class="fas fa-arrow-left"></i></button><h3>Cek Margin</h3></div>
-        <div class="container" style="padding-top:20px">
-            <div class="card">
-                <input type="number" id="cC" class="input" placeholder="Modal (HPP)" oninput="app.qc()" style="margin-bottom:10px">
-                <input type="number" id="cP" class="input" value="30" oninput="app.qc()">
-                <div style="text-align:center; margin-top:20px">
-                    <span class="label">Harga Jual</span>
-                    <h2 id="cRes" style="color:var(--p)">Rp 0</h2>
+                <div class="lcd-row" style="border:none; margin-top:10px;">
+                    <span class="lcd-lbl" id="lbl3">RUPIAH</span>
+                    <span class="lcd-val" style="font-size:48px;" id="val3">0</span>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div id="setModal" class="modal">
-        <div class="modal-content">
-            <h3>Pengaturan</h3>
-            <div class="form-group" style="margin-top:15px">
-                <span class="label">Groq API Key (Wajib untuk AI)</span>
-                <input type="text" id="skKey" class="input" placeholder="gsk_...">
-                <small style="color:var(--gry); font-size:0.7rem">Dapatkan di console.groq.com</small>
+        <div class="keypad-area">
+            <div class="info-bar">
+                MENU: <strong>1013</strong> (Kalibrasi) • <strong>1015</strong> (Harga) • <strong>1379</strong> (Stok)
             </div>
-            <div class="form-group">
-                <span class="label">Limit Stok Menipis</span>
-                <input type="number" id="skLim" class="input">
+            <div class="keys-grid">
+                <button class="key" onclick="press('1')">1</button>
+                <button class="key" onclick="press('2')">2</button>
+                <button class="key" onclick="press('3')">3</button>
+                <button class="key c" onclick="press('C')">C</button>
+
+                <button class="key" onclick="press('4')">4</button>
+                <button class="key" onclick="press('5')">5</button>
+                <button class="key" onclick="press('6')">6</button>
+                <button class="key p" onclick="preset(10000)">P1</button>
+
+                <button class="key" onclick="press('7')">7</button>
+                <button class="key" onclick="press('8')">8</button>
+                <button class="key" onclick="press('9')">9</button>
+                <button class="key p" onclick="preset(20000)">P2</button>
+
+                <button class="key" style="font-size:14px;" onclick="press('.')">.</button>
+                <button class="key" onclick="press('0')">0</button>
+                <button class="key" style="font-size:14px;" onclick="press('00')">00</button>
+                <button class="key ent" onclick="process()">ENT</button>
             </div>
-            <div style="display:flex; gap:10px">
-                <button onclick="document.getElementById('setModal').style.display='none'" class="btn" style="background:var(--gry)">Tutup</button>
-                <button onclick="app.svS()" class="btn">Simpan</button>
-            </div>
-            <button onclick="app.nuke()" class="btn" style="background:var(--err); margin-top:20px; font-size:0.8rem">Hapus Semua Data</button>
         </div>
     </div>
 
-    <div class="nav-bar">
-        <div class="nav-icon active" onclick="ui.nav('home',this)"><i class="fas fa-home"></i><span>Home</span></div>
-        <div class="nav-icon" onclick="ui.nav('trans',this)"><i class="fas fa-wallet"></i><span>Transaksi</span></div>
-        <div class="nav-icon" onclick="ui.nav('prod',this)"><i class="fas fa-box"></i><span>Stok</span></div>
-        <div class="nav-icon" onclick="ui.nav('rep',this)"><i class="fas fa-chart-pie"></i><span>Laporan</span></div>
-        <div class="nav-icon" onclick="ui.nav('ai',this)"><i class="fas fa-robot"></i><span>AI</span></div>
+    <div id="viewAdmin">
+        <div class="adm-head">
+            <div style="font-size:12px; color:#64748b; font-weight:600;">DASHBOARD</div>
+            <div class="adm-title">Laporan Keuangan</div>
+        </div>
+
+        <div class="card">
+            <div class="card-lbl">PROFIT BERSIH (HARI INI)</div>
+            <div class="card-val" id="admProfit">Rp 0</div>
+            <div style="font-size:11px; margin-top:5px; color:#10b981;" id="admMargin">Margin: Rp 0 / Liter</div>
+        </div>
+
+        <div class="grid-2">
+            <div class="box">
+                <div class="card-lbl">UANG MASUK</div>
+                <div style="font-size:18px; font-weight:800; margin-top:5px;" id="admOmset">Rp 0</div>
+            </div>
+            <div class="box" style="background:#e0f2fe;">
+                <div class="card-lbl" style="color:#0369a1;">SISA STOK</div>
+                <div style="font-size:18px; font-weight:800; color:#0284c7; margin-top:5px;" id="admStok">0 L</div>
+            </div>
+        </div>
+
+        <div class="history-list">
+            <h4 style="margin:20px 0 10px; color:#333;">Riwayat Transaksi</h4>
+            <div id="historyList"></div>
+        </div>
     </div>
 
     <script>
-        const $ = id => document.getElementById(id);
-        const fmt = n => new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(n);
-        const now = () => new Date().toISOString().split('T')[0];
-
-        // --- FIXED UI CONTROLLER ---
-        const ui = {
-            nav: (id, el) => {
-                document.querySelectorAll('.section').forEach(x => x.classList.remove('active'));
-                $(id).classList.add('active');
-                if(['home','trans','prod','rep','ai'].includes(id)){
-                    document.querySelectorAll('.nav-icon').forEach(x => x.classList.remove('active'));
-                    if(el) el.classList.add('active');
-                }
-                window.scrollTo(0,0);
-            },
-            modal: (id) => { 
-                $(id).style.display='flex'; 
-                $('skKey').value = db.c.key || ""; 
-                $('skLim').value = db.c.limit; 
-            }
+        // --- DEFINISI VARIABEL DI AWAL (PENTING AGAR TIDAK ERROR) ---
+        let screenInput = "";
+        let activeMenu = null; // null = standby, 'stock', 'price', 'pulse', 'modal'
+        let db = {
+            price: 10000,
+            modal: 9000,
+            stock: 0,
+            pulse: 360,
+            trans: []
         };
 
-        const db = {
-            t: JSON.parse(localStorage.getItem('t')) || [],
-            p: JSON.parse(localStorage.getItem('p')) || [],
-            d: JSON.parse(localStorage.getItem('d')) || [],
-            c: JSON.parse(localStorage.getItem('c')) || { key:'', limit:5, target:10000000 }
+        // --- FIREBASE SETUP ---
+        const firebaseConfig = { 
+            apiKey: "AIzaSyBpwNPIYhelOhkPvJsBmKvlZnaH9FVnmM4", 
+            authDomain: "pom-mini-50b1e.firebaseapp.com", 
+            projectId: "pom-mini-50b1e", 
+            storageBucket: "pom-mini-50b1e.firebasestorage.app", 
+            messagingSenderId: "77499696502", 
+            appId: "1:77499696502:web:8080c37da62a12c9566657", 
+            measurementId: "G-KRRHTTGBRF" 
         };
+        
+        let dbFirestore;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            dbFirestore = firebase.firestore();
+            dbFirestore.settings({ experimentalForceLongPolling: true, merge: true });
+        } catch(e) { console.log("Offline"); document.getElementById('connDot').classList.add('offline'); }
 
-        const app = {
-            sv: () => {
-                localStorage.setItem('t', JSON.stringify(db.t)); localStorage.setItem('p', JSON.stringify(db.p));
-                localStorage.setItem('d', JSON.stringify(db.d)); localStorage.setItem('c', JSON.stringify(db.c));
-                app.ren();
-            },
-            
-            // Logic
-            addT: (e) => {
-                e.preventDefault();
-                const c = document.querySelector('input[name="tCat"]:checked').value;
-                const n = parseFloat($('tNom').value)||0;
-                let dr=0, cr=0;
-                if(['Pendapatan','Kewajiban','Ekuitas'].includes(c)) dr=n; else cr=n;
-                db.t.push({id:Date.now(), dt:$('tDate').value, ds:$('tDesc').value, c:c, dr, cr});
-                e.target.reset(); $('tDate').value=now(); app.sv(); alert('Tersimpan');
-            },
-            addP: (e) => {
-                e.preventDefault();
-                db.p.push({id:Date.now(), n:$('pN').value, b:parseFloat($('pB').value)||0, s:parseFloat($('pS').value)||0, q:parseInt($('pQ').value)||0});
-                e.target.reset(); app.sv();
-            },
-            sell: (id) => {
-                const p = db.p.find(x=>x.id===id); if(!p||p.q<=0)return alert('Habis!');
-                p.q--;
-                db.t.push({id:Date.now(), dt:now(), ds:'Jual: '+p.n, c:'Pendapatan', dr:p.s, cr:0});
-                db.t.push({id:Date.now()+1, dt:now(), ds:'HPP: '+p.n, c:'HPP', dr:0, cr:p.b});
-                app.sv();
-            },
-            filP: () => { const q=$('pSrc').value.toLowerCase(); app.rP(db.p.filter(x=>x.n.toLowerCase().includes(q))); },
-            addD: (e) => {
-                e.preventDefault();
-                db.d.push({id:Date.now(), t:document.querySelector('input[name="dT"]:checked').value, n:$('dN').value, a:parseFloat($('dA').value), s:false});
-                e.target.reset(); app.sv();
-            },
-            togD: (id) => { const x=db.d.find(y=>y.id===id); if(x){x.s=!x.s; app.sv();} },
-            
-            // --- SETTINGS SAVE FIXED ---
-            svS: () => { 
-                db.c.key=$('skKey').value.trim(); 
-                db.c.limit=$('skLim').value; 
-                app.sv(); 
-                $('setModal').style.display='none'; 
-                alert("Pengaturan Disimpan");
-            },
-            
-            svT: () => { db.c.target=parseFloat($('tVal').value); app.sv(); alert('Target Updated'); },
-            nuke: () => { if(confirm("Hapus SEMUA data?")) { localStorage.clear(); location.reload(); } },
-            qc: () => { const c=parseFloat($('cC').value)||0, p=parseFloat($('cP').value)||0; $('cRes').innerText=fmt(c+(c*(p/100))); },
+        // --- SYSTEM INIT ---
+        function init() {
+            let saved = localStorage.getItem('dl_v11_pro');
+            if(saved) db = { ...db, ...JSON.parse(saved) };
+            updateDisplay();
 
-            // AI
-            ask: async () => {
-                let i=$('aiIn'), m=i.value, b=$('cBox'); if(!m)return; i.value='';
-                b.innerHTML+=`<div class="msg-bubble msg-user">${m}</div>`;
-                if(!db.c.key) { b.innerHTML+=`<div class="msg-bubble msg-ai" style="color:red">API Key belum diisi.</div>`; return; }
-                const ctx = `Profit:${$('rNet').innerText}, Cash:${$('bCash').innerText}.`;
-                try {
-                    let r = await fetch("https://api.groq.com/openai/v1/chat/completions", { 
-                        method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${db.c.key}`}, 
-                        body:JSON.stringify({model:"llama-3.3-70b-versatile", messages:[{role:"system",content:`Context: Bisnis user. Data: ${ctx}. Jawab singkat.`},{role:"user",content:m}]}) 
-                    });
-                    let j = await r.json(); b.innerHTML+=`<div class="msg-bubble msg-ai">${j.choices[0].message.content}</div>`;
-                    b.scrollTop = b.scrollHeight;
-                } catch(e) { b.innerHTML+=`<div class="msg-bubble msg-ai" style="color:red">Error: ${e.message}</div>`; }
-            },
-            askHPP: async () => {
-                let m=$('hppIn').value, b=$('hppRes'); if(!m)return;
-                b.innerHTML = '<div style="color:var(--p)">Sedang menghitung...</div>';
-                if(!db.c.key) { b.innerHTML=`<div style="color:red">API Key belum diisi.</div>`; return; }
-                try {
-                    let r = await fetch("https://api.groq.com/openai/v1/chat/completions", { 
-                        method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${db.c.key}`}, 
-                        body:JSON.stringify({model:"llama-3.3-70b-versatile", messages:[{role:"system",content:"Anda Akuntan. Hitung HPP, Total, Saran Harga (Margin 30%). HTML Format."}, {role:"user",content:m}]}) 
-                    });
-                    let j = await r.json(); b.innerHTML=`<div style="background:#f0f9ff; padding:15px; border-radius:10px; border:1px solid #bae6fd">${j.choices[0].message.content}</div>`;
-                } catch(e) { b.innerHTML=`<div style="color:red">Gagal menghitung.</div>`; }
-            },
-
-            // Render
-            rP: (arr) => {
-                $('lProd').innerHTML = arr.map(x => `
-                <div class="list-item">
-                    <div><b>${x.n}</b><div style="font-size:0.75rem; color:var(--gry)">Modal: ${fmt(x.b)} | Jual: ${fmt(x.s)}</div></div>
-                    <div style="text-align:right"><span class="badge ${x.q<=db.c.limit?'bg-red':'bg-green'}">Stok: ${x.q}</span><br><button onclick="app.sell(${x.id})" style="margin-top:5px; border:none; background:transparent; color:var(--p); font-weight:700; cursor:pointer">JUAL</button></div>
-                </div>`).join('');
-            },
-            ren: () => {
-                let s=0, cogs=0, exp=0, cash=0, ast=0, liab=0, eq=0;
-                db.t.forEach(x => {
-                    if(x.c==='Pendapatan'){s+=x.dr; cash+=x.dr} else if(x.c==='Beban'){exp+=x.cr; cash-=x.cr}
-                    else if(x.c==='HPP'){cogs+=x.cr} else if(x.c==='Aset'){ast+=x.cr; cash-=x.cr}
-                    else if(x.c==='Kewajiban'){liab+=x.dr; cash+=x.dr} else if(x.c==='Ekuitas'){eq+=x.dr; cash+=x.dr}
+            if(dbFirestore) {
+                const docRef = dbFirestore.collection("data_toko").doc("config_v11");
+                docRef.onSnapshot((doc) => {
+                    if (doc.exists) {
+                        db = { ...db, ...doc.data() };
+                        localStorage.setItem('dl_v11_pro', JSON.stringify(db)); 
+                        updateDisplay();
+                        if(document.getElementById('viewAdmin').style.display === 'block') renderAdmin();
+                    }
                 });
-                const sv = db.p.reduce((a,b)=>a+(b.q*b.b),0);
-                const net = s-cogs-exp; const tot = cash+sv+ast;
-
-                $('dAsset').innerText=fmt(tot); $('dSale').innerText=fmt(s); $('dNet').innerText=fmt(net);
-                const tp = Math.min((s/db.c.target)*100,100).toFixed(1);
-                $('tPct').innerText=tp+'%'; $('tBar').style.width=tp+'%'; $('tCur').innerText=fmt(s); $('tMax').innerText='Target: '+fmt(db.c.target);
-
-                const low = db.p.filter(x=>x.q<=db.c.limit);
-                $('lowStockList').innerHTML = low.length ? low.map(x=>`<span class="badge bg-red">${x.n}: ${x.q}</span>`).join('') : '<small style="color:var(--gry)">Stok Aman.</small>';
-
-                $('rSale').innerText=fmt(s); $('rCogs').innerText='('+fmt(cogs)+')'; $('rExp').innerText='('+fmt(exp)+')'; $('rNet').innerText=fmt(net);
-                $('bCash').innerText=fmt(cash); $('bInv').innerText=fmt(sv); $('bLiab').innerText=fmt(liab); $('bEq').innerText=fmt(tot-liab);
-
-                $('lTrans').innerHTML = db.t.slice().reverse().slice(0,10).map(x => {
-                    const isIn=['Pendapatan','Kewajiban','Ekuitas'].includes(x.c);
-                    return `<div class="list-item"><div><b>${x.ds}</b><div style="font-size:0.7rem; color:var(--gry)">${x.dt} • ${x.c}</div></div><b style="color:${isIn?'var(--suc)':'var(--txt)'}">${isIn?'+':'-'} ${fmt(x.dr||x.cr)}</b></div>`;
-                }).join('');
-                
-                app.rP(db.p);
-                $('lDebt').innerHTML = db.d.map(x => `<div class="list-item"><div><span class="badge ${x.t==='Hutang'?'bg-red':'bg-green'}">${x.t}</span> <b>${x.n}</b><br><small>${fmt(x.a)}</small></div><button onclick="app.togD(${x.id})" class="badge" style="border:none; cursor:pointer; background:${x.s?'var(--suc)':'var(--border)'}; color:${x.s?'white':'var(--txt)'}">${x.s?'Lunas':'Belum'}</button></div>`).join('');
-                
-                $('tVal').value = db.c.target;
             }
-        };
+        }
+        
+        // --- NAVIGATION ---
+        function switchMode() {
+            let mesin = document.getElementById('viewMesin');
+            let admin = document.getElementById('viewAdmin');
+            let btn = document.getElementById('btnText');
 
-        // Init
-        $('fTrans').addEventListener('submit', app.addT); $('fProd').addEventListener('submit', app.addP); $('fDebt').addEventListener('submit', app.addD);
-        $('tDate').value = now(); app.ren();
+            if(mesin.style.display !== 'none') {
+                mesin.style.display = 'none';
+                admin.style.display = 'block';
+                btn.innerText = "MESIN";
+                renderAdmin();
+            } else {
+                mesin.style.display = 'flex';
+                admin.style.display = 'none';
+                btn.innerText = "ADMIN";
+                updateDisplay();
+            }
+        }
+
+        // --- MESIN LOGIC (CORE) ---
+        function press(key) {
+            // Jika pencet C, reset input
+            if(key === 'C') {
+                if(activeMenu) closeMenu(); // Keluar menu
+                else { screenInput = ""; updateDisplay(); } // Reset layar biasa
+                return;
+            }
+
+            // Batasi panjang input
+            if(screenInput.length < 8) {
+                if(activeMenu && (key === '.' || key === '00')) return; // Menu cuma terima angka bulat
+                screenInput += key;
+                
+                // Update tampilan angka
+                if(activeMenu) {
+                    document.getElementById('val3').innerText = screenInput;
+                } else {
+                    document.getElementById('val3').innerText = screenInput;
+                }
+            }
+        }
+
+        function preset(val) {
+            if(!activeMenu) {
+                screenInput = val.toString();
+                document.getElementById('val3').innerText = screenInput;
+            }
+        }
+
+        function process() {
+            // 1. JIKA SEDANG DI MENU (Simpan Setting)
+            if(activeMenu) {
+                let val = parseFloat(screenInput);
+                if(isNaN(val)) return;
+                
+                if(activeMenu === 'pulse') db.pulse = val;
+                else if(activeMenu === 'price') db.price = val;
+                else if(activeMenu === 'modal') db.modal = val;
+                else if(activeMenu === 'stock') db.stock = val;
+
+                save(); 
+                alert("TERSIMPAN: " + val);
+                closeMenu(); 
+                return;
+            }
+
+            // 2. DETEKSI KODE RAHASIA
+            if(screenInput === "1013") { openMenu('pulse', "SET PULSE"); return; }
+            if(screenInput === "1015") { openMenu('price', "SET HARGA JUAL"); return; }
+            if(screenInput === "1000") { openMenu('modal', "SET HARGA KULAKAN"); return; }
+            if(screenInput === "1379") { openMenu('stock', "ISI STOK (LITER)"); return; }
+
+            // 3. PROSES JUALAN
+            let nom = parseInt(screenInput);
+            if(!nom) return;
+
+            let literLayar = nom / db.price;
+            let literFisik = literLayar * (db.pulse / 400); // Rumus Inti 360
+
+            if(db.stock < literFisik) {
+                alert("STOK HABIS! Sisa: " + db.stock.toFixed(2) + " L\nSilakan Kode 1379 untuk isi.");
+                screenInput = ""; updateDisplay(); return;
+            }
+
+            // Eksekusi
+            db.stock -= literFisik;
+            
+            let now = new Date();
+            db.trans.unshift({
+                date: now.toLocaleDateString(),
+                time: now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}),
+                nominal: nom,
+                l_layar: literLayar,
+                l_fisik: literFisik
+            });
+            if(db.trans.length > 50) db.trans.pop();
+
+            save();
+            
+            // Animasi Loading
+            screenInput = "";
+            document.getElementById('val3').innerText = "PROSES...";
+            setTimeout(() => {
+                document.getElementById('val3').innerText = nom;
+                document.getElementById('val2').innerText = literLayar.toFixed(2);
+            }, 500);
+        }
+
+        // --- MENU SYSTEM (LCD OVERRIDE) ---
+        function openMenu(type, title) {
+            activeMenu = type;
+            screenInput = "";
+            
+            // Ubah Tampilan LCD jadi Mode Menu (Kuning)
+            document.getElementById('lcdPanel').classList.add('menu-mode');
+            
+            document.getElementById('lbl1').innerText = "MODE MENU";
+            document.getElementById('val1').innerText = "--------";
+            
+            document.getElementById('lbl2').innerText = title;
+            document.getElementById('val2').innerText = "INPUT:";
+            
+            document.getElementById('lbl3').innerText = "NILAI BARU";
+            document.getElementById('val3').innerText = "_";
+        }
+
+        function closeMenu() {
+            activeMenu = null;
+            screenInput = "";
+            document.getElementById('lcdPanel').classList.remove('menu-mode');
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            // Kembalikan teks LCD ke normal
+            document.getElementById('lbl1').innerText = "HARGA";
+            document.getElementById('val1').innerText = db.price;
+            
+            document.getElementById('lbl2').innerText = "LITER";
+            
+            document.getElementById('lbl3').innerText = "RUPIAH";
+            
+            if(!screenInput) {
+                document.getElementById('val2').innerText = "0.00";
+                document.getElementById('val3').innerText = "0";
+            }
+        }
+
+        // --- ADMIN RENDER ---
+        function renderAdmin() {
+            let today = new Date().toLocaleDateString();
+            let dInc = 0, dLitFisik = 0;
+
+            db.trans.forEach(t => {
+                if(t.date === today) {
+                    dInc += t.nominal;
+                    dLitFisik += t.l_fisik;
+                }
+            });
+
+            let hpp = dLitFisik * db.modal;
+            let profit = dInc - hpp;
+            let margin = db.price - db.modal;
+            const fmt = (n) => "Rp " + parseInt(n).toLocaleString('id-ID');
+
+            document.getElementById('admProfit').innerText = fmt(profit);
+            document.getElementById('admMargin').innerText = `Margin: ${fmt(margin)}/L (Modal ${fmt(db.modal)})`;
+            document.getElementById('admOmset').innerText = fmt(dInc);
+            document.getElementById('admStok').innerText = db.stock.toFixed(2) + " L";
+
+            document.getElementById('historyList').innerHTML = db.trans.slice(0,10).map(t => `
+                <div class="h-item">
+                    <div>
+                        <strong style="font-size:14px;">${t.time}</strong><br>
+                        <span style="color:#64748b">Layar: ${t.l_layar.toFixed(2)}L</span>
+                    </div>
+                    <div style="text-align:right;">
+                        <strong style="color:#10b981; font-size:14px;">+${fmt(t.nominal)}</strong><br>
+                        <span style="color:#dc2626; font-size:10px;">Fisik: ${t.l_fisik.toFixed(3)}L</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- SAVE DATA ---
+        function save() {
+            localStorage.setItem('dl_v11_pro', JSON.stringify(db));
+            if(dbFirestore) {
+                dbFirestore.collection("data_toko").doc("config_v11").set(db).catch(console.error);
+            }
+        }
+
+        // Jalankan Init Terakhir
+        init();
+
     </script>
 </body>
 </html>
