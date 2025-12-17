@@ -2,422 +2,774 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>POM CPU PRO v11.2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pom OS Pro - Split Design</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-    
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* --- GLOBAL --- */
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
-        body { margin: 0; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; background: #121212; color: white; }
+        :root {
+            /* PALETTE */
+            --bg-body: #F4F6F9;
+            --white: #FFFFFF;
+            --text-dark: #1E293B;
+            --text-grey: #94A3B8;
+            
+            --primary: #4361EE; 
+            --primary-grad: linear-gradient(135deg, #4361EE 0%, #304FFE 100%);
+            
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            
+            --radius: 24px;
+            --shadow: 0 8px 30px -5px rgba(67, 97, 238, 0.08);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg-body); color: var(--text-dark); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        #splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--white); z-index: 9999; display: flex; align-items: center; justify-content: center; transition: 0.5s; }
+        .loader { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+
+        .app-container { flex: 1; overflow-y: auto; padding: 25px 20px 100px 20px; max-width: 480px; margin: 0 auto; width: 100%; }
+        .page { display: none; animation: fadeIn 0.4s ease; }
+        .page.active { display: block; }
 
         /* HEADER */
-        .status-bar {
-            position: absolute; top: 0; left: 0; right: 0; height: 50px;
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0 15px; z-index: 100;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
-        }
-        .conn-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
-        .conn-dot.offline { background: #ef4444; box-shadow: none; }
-        
-        .btn-switch {
-            background: rgba(255,255,255,0.15); backdrop-filter: blur(5px);
-            border: 1px solid rgba(255,255,255,0.2); color: white;
-            padding: 6px 12px; border-radius: 20px; font-size: 10px; font-weight: bold;
-            display: flex; align-items: center; gap: 5px; cursor: pointer;
-        }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .user-info h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 2px; }
+        .user-info p { font-size: 0.8rem; color: var(--text-grey); margin: 0; }
+        .avatar { width: 45px; height: 45px; border-radius: 12px; object-fit: cover; box-shadow: var(--shadow); cursor: pointer; }
 
-        /* --- VIEW 1: MESIN (DEFAULT) --- */
-        #viewMesin { height: 100%; display: flex; flex-direction: column; }
-        
-        .lcd-area {
-            background: #000; padding: 60px 20px 20px;
-            border-bottom: 4px solid #dc2626;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        /* BALANCE CARD (CLEAN) */
+        .balance-card {
+            background: var(--primary-grad); color: var(--white); padding: 25px;
+            border-radius: 28px; position: relative; overflow: hidden;
+            box-shadow: 0 15px 35px -5px rgba(67, 97, 238, 0.4); margin-bottom: 20px;
         }
-        .lcd-panel {
-            background: #263238; border: 6px solid #37474f; border-radius: 10px; padding: 15px;
-            font-family: 'Share Tech Mono', monospace; display: flex; flex-direction: column; gap: 5px;
+        .balance-card::before { content: ''; position: absolute; top: -50%; right: -20%; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+        
+        .bal-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .card-label { font-size: 0.8rem; opacity: 0.9; font-weight: 500; }
+        .card-amount { font-size: 2.4rem; font-weight: 700; margin: 10px 0 20px 0; letter-spacing: -1px; line-height: 1;}
+        
+        .bal-row { display: flex; gap: 30px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; }
+        .bal-item span { font-size: 0.7rem; opacity: 0.8; }
+        .bal-item b { display: block; font-size: 1rem; }
+
+        /* NEW TARGET CARD (SEPARATED) */
+        .target-card { background: var(--white); border-radius: 20px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 30px; }
+        .target-row { margin-bottom: 15px; }
+        .target-row:last-child { margin-bottom: 0; }
+        .t-head { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; margin-bottom: 8px; }
+        .t-val { font-size: 0.75rem; color: var(--text-grey); font-weight: 400; }
+        
+        .progress-track { width: 100%; height: 10px; background: #F1F5F9; border-radius: 6px; overflow: hidden; }
+        .progress-bar { height: 100%; border-radius: 6px; transition: 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .bar-day { background: linear-gradient(90deg, #34D399, #10B981); width: 0%; }
+        .bar-month { background: linear-gradient(90deg, #FBBF24, #F59E0B); width: 0%; }
+
+        /* MENU UTILITIES */
+        .section-title { font-size: 1rem; font-weight: 700; margin-bottom: 15px; display: block; color: var(--text-dark); }
+        .grid-menu { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 30px; }
+        .menu-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; }
+        .menu-btn:active { transform: scale(0.95); }
+        .icon-box { 
+            width: 56px; height: 56px; border-radius: 18px; display: flex; align-items: center; justify-content: center; 
+            font-size: 1.2rem; box-shadow: var(--shadow); background: var(--white); transition: 0.2s;
         }
-        .lcd-row { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px dashed rgba(76, 175, 80, 0.3); }
-        
-        /* Warna LCD Normal (Hijau) */
-        .lcd-lbl { font-size: 14px; color: #4caf50; opacity: 0.8; }
-        .lcd-val { font-size: 36px; color: #4caf50; text-shadow: 0 0 10px rgba(76, 175, 80, 0.4); }
-        .lcd-val.sm { font-size: 24px; }
+        .menu-label { font-size: 0.7rem; font-weight: 600; color: var(--text-grey); text-align: center; line-height: 1.2;}
 
-        /* Warna LCD Mode Menu (Kuning) */
-        .menu-mode .lcd-lbl { color: #f59e0b; }
-        .menu-mode .lcd-val { color: #f59e0b; text-shadow: 0 0 10px rgba(245, 158, 11, 0.4); }
+        /* Icons */
+        .ic-history { color: #8B5CF6; background: #F3E8FF; }
+        .ic-target { color: #10B981; background: #D1FAE5; }
+        .ic-stock { color: #F59E0B; background: #FEF3C7; }
+        .ic-analytics { color: #EF4444; background: #FEE2E2; }
 
-        .keypad-area { flex: 1; background: #1e1e1e; padding: 20px; display: flex; flex-direction: column; justify-content: center; }
-        .info-bar { text-align: center; font-size: 10px; color: #555; margin-bottom: 15px; font-family: 'Share Tech Mono'; }
-        
-        .keys-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; height: 100%; max-height: 400px; }
-        .key {
-            background: #333; border: none; border-radius: 10px; color: white;
-            font-family: 'Inter', sans-serif; font-size: 24px; font-weight: 800;
-            box-shadow: 0 5px 0 #111; cursor: pointer; position: relative;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .key:active { transform: translateY(5px); box-shadow: none; }
-        .key.c { background: #f59e0b; color: black; }
-        .key.ent { background: #dc2626; grid-row: span 2; font-size: 18px; }
-        .key.p { font-size: 14px; background: #424242; }
+        /* LISTS */
+        .tx-list { display: flex; flex-direction: column; gap: 12px; }
+        .tx-item { display: flex; justify-content: space-between; align-items: center; background: var(--white); padding: 15px; border-radius: 16px; box-shadow: var(--shadow); transition: 0.2s;}
+        .tx-item:active { transform: scale(0.98); }
+        .tx-left { display: flex; align-items: center; gap: 15px; }
+        .tx-icon-sm { width: 40px; height: 40px; border-radius: 12px; background: #F3F4F6; display: flex; align-items: center; justify-content: center; color: var(--primary); }
+        .tx-details h4 { font-size: 0.85rem; font-weight: 600; margin: 0; }
+        .tx-details p { font-size: 0.7rem; color: var(--text-grey); margin: 0; }
+        .tx-amount { font-weight: 700; font-size: 0.9rem; }
+        .pos { color: var(--success); } .neg { color: var(--danger); }
 
-        /* --- VIEW 2: ADMIN (HIDDEN) --- */
-        #viewAdmin { display: none; height: 100%; background: #F2F4F7; color: #1e293b; overflow-y: auto; position: relative; }
-        
-        .adm-head { background: white; padding: 70px 20px 20px; border-bottom: 1px solid #eee; }
-        .adm-title { font-size: 24px; font-weight: 900; color: #1e293b; }
-        
-        .card { background: white; padding: 20px; border-radius: 20px; margin: 15px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
-        .card-val { font-size: 32px; font-weight: 800; color: #7F3DFF; margin: 5px 0; }
-        .card-lbl { font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; }
-        
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px; }
-        .box { background: white; padding: 15px; border-radius: 15px; }
-        
-        .history-list { padding: 20px; padding-bottom: 50px; }
-        .h-item { display: flex; justify-content: space-between; padding: 15px; background: white; border-radius: 12px; margin-bottom: 8px; border: 1px solid #eee; }
+        /* POM UI */
+        .display-box { background: #111827; color: var(--white); padding: 25px; border-radius: 24px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .display-big { font-size: 2.5rem; font-weight: 700; margin: 5px 0; font-family: monospace; letter-spacing: -1px; }
+        .input-modern { width: 100%; border: none; background: var(--white); padding: 15px; border-radius: 16px; font-size: 1.2rem; font-weight: 700; color: var(--primary); text-align: center; box-shadow: var(--shadow); outline: none; margin-bottom: 20px; }
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        .key { background: var(--white); border: none; padding: 15px; border-radius: 14px; font-size: 1rem; font-weight: 600; box-shadow: var(--shadow); cursor: pointer; color: var(--text-dark); }
+        .btn-action { width: 100%; padding: 16px; border: none; border-radius: 16px; font-size: 1.1rem; font-weight: 700; color: var(--white); cursor: pointer; background: var(--text-dark); transition: 0.3s; }
+        .btn-blue { background: var(--primary); } .btn-red { background: var(--danger); animation: pulse 1s infinite; }
 
+        /* NAV BOTTOM */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; background: var(--white); display: flex; justify-content: space-around; align-items: center; border-radius: 25px 25px 0 0; box-shadow: 0 -5px 30px rgba(0,0,0,0.05); z-index: 1000; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; color: #D1D5DB; width: 20%; }
+        .nav-item i { font-size: 1.4rem; transition: 0.3s; }
+        .nav-item.active i { color: var(--primary); transform: translateY(-5px); }
+        .nav-dot { width: 5px; height: 5px; background: var(--primary); border-radius: 50%; opacity: 0; transition: 0.3s; }
+        .nav-item.active .nav-dot { opacity: 1; }
+
+        /* MODALS & CARDS */
+        .modal-wrap { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
+        .modal-box { background: var(--white); padding: 25px; border-radius: 24px; width: 90%; max-width: 340px; animation: popUp 0.3s ease; max-height: 80vh; overflow-y: auto;}
+        
+        .card-clean { background: var(--white); padding: 20px; border-radius: 20px; box-shadow: var(--shadow); margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-grey); margin-bottom: 5px; }
+        .form-group input { width: 100%; padding: 12px; border: 1px solid #E5E7EB; border-radius: 12px; font-size: 0.9rem; outline: none; margin-bottom: 15px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* HIDDEN */
+        #pdf-template, #receipt-modal { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="status-bar">
-        <div class="conn-dot" id="connDot"></div>
-        <div class="btn-switch" onclick="switchMode()">
-            <span class="material-icons-round" style="font-size:16px;">admin_panel_settings</span>
-            <span id="btnText">ADMIN</span>
+    <div id="splash"><div class="loader"></div></div>
+
+    <div class="app-container">
+        
+        <div class="header" id="header">
+            <div class="user-info">
+                <p>Dashboard</p>
+                <h2 id="disp-store">Juragan Pom</h2>
+            </div>
+            <img src="https://via.placeholder.com/100" id="head-ava" class="avatar" onclick="document.getElementById('fileIn').click()">
+            <input type="file" id="fileIn" hidden onchange="upProfile(this)">
+        </div>
+
+        <div id="home" class="page active">
+            
+            <div class="balance-card">
+                <div class="bal-top">
+                    <div>
+                        <div class="card-label">Profit Bersih (Net)</div>
+                        <div class="card-amount" id="dash-profit">Rp 0</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 10px; font-size: 0.7rem;">
+                        <i class="fas fa-wallet"></i> Saldo
+                    </div>
+                </div>
+                <div class="bal-row">
+                    <div class="bal-item">
+                        <span>Pemasukan</span>
+                        <b id="dash-omzet">Rp 0</b>
+                    </div>
+                    <div class="bal-item">
+                        <span>Pengeluaran</span>
+                        <b id="dash-exp">Rp 0</b>
+                    </div>
+                </div>
+            </div>
+
+            <div class="target-card">
+                <div class="target-row">
+                    <div class="t-head">
+                        <span><i class="fas fa-calendar-day" style="color:var(--success)"></i> Target Harian</span>
+                        <span id="tg-d-pct">0%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-bar bar-day" id="bar-day"></div>
+                    </div>
+                    <div style="text-align: right; margin-top: 2px;">
+                        <span class="t-val">Goal: <span id="tg-d-val">170k</span></span>
+                    </div>
+                </div>
+                <div class="target-row">
+                    <div class="t-head">
+                        <span><i class="fas fa-calendar-alt" style="color:var(--warning)"></i> Target Bulanan</span>
+                        <span id="tg-m-pct">0%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-bar bar-month" id="bar-month"></div>
+                    </div>
+                    <div style="text-align: right; margin-top: 2px;">
+                        <span class="t-val">Goal: <span id="tg-m-val">5jt</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <span class="section-title">Menu Utama</span>
+            <div class="grid-menu">
+                <div class="menu-btn" onclick="openHistoryModal()">
+                    <div class="icon-box ic-history"><i class="fas fa-history"></i></div>
+                    <span class="menu-label">Riwayat<br>Edit</span>
+                </div>
+                <div class="menu-btn" onclick="openModal('target-modal')">
+                    <div class="icon-box ic-target"><i class="fas fa-bullseye"></i></div>
+                    <span class="menu-label">Target<br>Set</span>
+                </div>
+                <div class="menu-btn" onclick="openModal('stock-modal')">
+                    <div class="icon-box ic-stock"><i class="fas fa-cubes"></i></div>
+                    <span class="menu-label">Atur<br>Stok</span>
+                </div>
+                <div class="menu-btn" onclick="openAnalytics()">
+                    <div class="icon-box ic-analytics"><i class="fas fa-chart-line"></i></div>
+                    <span class="menu-label">Analisa<br>Detail</span>
+                </div>
+            </div>
+
+            <span class="section-title">Statistik Hari Ini</span>
+            <div class="tx-list">
+                <div class="tx-item">
+                    <div class="tx-left"><div class="tx-icon-sm"><i class="fas fa-tachometer-alt" style="color:var(--warning)"></i></div>
+                    <div class="tx-details"><h4>Volume</h4><p>Liter Terjual</p></div></div>
+                    <span class="tx-amount" id="dash-lit">0 L</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="pom" class="page">
+            <span class="section-title">Mesin Pom</span>
+            <div class="display-box">
+                <div style="font-size:0.8rem; opacity:0.7">TOTAL BAYAR</div>
+                <div class="display-big" id="lcd-rp">0</div>
+                <div style="display:flex; justify-content:space-between; font-size:0.9rem; opacity:0.8; margin-top:10px;">
+                    <span>LITER: <b id="lcd-lit">0.00</b></span>
+                    <span>HARGA: <b id="lcd-prc">0</b></span>
+                </div>
+            </div>
+            <input type="number" id="manual" class="input-modern" placeholder="Ketik Nominal (Rp)" oninput="setM(this.value)">
+            <div class="keypad">
+                <button class="key" onclick="setP(10000)">10rb</button>
+                <button class="key" onclick="setP(20000)">20rb</button>
+                <button class="key" onclick="setP(50000)">50rb</button>
+                <button class="key" onclick="setP(100000)">100rb</button>
+                <button class="key" style="color:var(--primary)" onclick="setP('FULL')">FULL</button>
+                <button class="key" style="color:var(--danger)" onclick="reset()">CLR</button>
+            </div>
+            <button id="btn-start" class="btn-action btn-blue" onclick="togglePump()">MULAI ISI</button>
+        </div>
+
+        <div id="expenses" class="page">
+            <span class="section-title">Catat Beban Ops</span>
+            <div class="card-clean">
+                <div class="form-group"><label>Nama Pengeluaran</label><input type="text" id="ex-n"></div>
+                <div class="form-group"><label>Jumlah (Rp)</label><input type="number" id="ex-a"></div>
+                <button class="btn-action btn-blue" onclick="addEx()">SIMPAN</button>
+            </div>
+            <span class="section-title">Riwayat Pengeluaran</span>
+            <div class="tx-list" id="ex-list"></div>
+        </div>
+
+        <div id="report" class="page">
+            <span class="section-title">Laporan Keuangan</span>
+            <div class="card-clean" style="text-align:center; background:#1E293B; color:white;">
+                <p style="opacity:0.8; font-size:0.8rem; margin-bottom:15px;">
+                    Periode: Tgl 18 Bulan Lalu s/d 17 Bulan Ini
+                </p>
+                <button class="key" style="width:auto; padding:10px 20px; color:#1E293B;" onclick="genPDF()">Download PDF</button>
+            </div>
+            <div class="tx-list" id="tx-list"></div>
+        </div>
+
+        <div id="settings" class="page">
+            <span class="section-title">Pengaturan</span>
+            <div class="card-clean">
+                <div class="form-group"><label>Nama Toko</label><input type="text" id="set-name"></div>
+                <div class="form-group"><label>Alamat</label><input type="text" id="set-addr"></div>
+                <div class="form-group"><label>Footer Struk</label><input type="text" id="set-msg"></div>
+                <button class="btn-action btn-blue" onclick="saveSet()">UPDATE PROFIL</button>
+            </div>
+            <div class="card-clean">
+                <div class="form-group"><label>Jual (Rp/L)</label><input type="number" id="set-prc" onchange="saveSet()"></div>
+                <div class="form-group"><label>HPP (Rp/L)</label><input type="number" id="set-hpp" onchange="saveSet()"></div>
+                <div class="form-group"><label>Kalibrasi (400=1L)</label><input type="number" id="set-cal" onchange="saveSet()"></div>
+                <div style="display:flex; gap:10px;">
+                    <button class="key" style="flex:1; color:red;" onclick="rstAll()">Reset</button>
+                    <button class="key" style="flex:1;" onclick="bkp()">Backup</button>
+                    <input type="file" id="res-f" hidden onchange="rst(this)">
+                    <button class="key" style="flex:1;" onclick="document.getElementById('res-f').click()">Restore</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="nav('home', this)"><i class="fas fa-home"></i><div class="nav-dot"></div></div>
+        <div class="nav-item" onclick="nav('pom', this)"><i class="fas fa-gas-pump"></i><div class="nav-dot"></div></div>
+        <div class="nav-item" onclick="nav('expenses', this)"><i class="fas fa-wallet"></i><div class="nav-dot"></div></div>
+        <div class="nav-item" onclick="nav('report', this)"><i class="fas fa-chart-pie"></i><div class="nav-dot"></div></div>
+        <div class="nav-item" onclick="nav('settings', this)"><i class="fas fa-cog"></i><div class="nav-dot"></div></div>
+    </div>
+
+    <div id="history-modal" class="modal-wrap">
+        <div class="modal-box" style="width: 100%; height: 90%;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3>Riwayat Transaksi</h3>
+                <button class="key" onclick="closeModal('history-modal')"><i class="fas fa-times"></i></button>
+            </div>
+            <p style="font-size:0.8rem; color:grey; margin-bottom:10px;">Klik item untuk Edit / Hapus / Struk</p>
+            <div id="history-list-content" class="tx-list" style="max-height:80%; overflow-y:auto;"></div>
         </div>
     </div>
 
-    <div id="viewMesin">
-        <div class="lcd-area">
-            <div class="lcd-panel" id="lcdPanel">
-                <div class="lcd-row">
-                    <span class="lcd-lbl" id="lbl1">HARGA</span>
-                    <span class="lcd-val sm" id="val1">10000</span>
-                </div>
-                <div class="lcd-row">
-                    <span class="lcd-lbl" id="lbl2">LITER</span>
-                    <span class="lcd-val" id="val2">0.00</span>
-                </div>
-                <div class="lcd-row" style="border:none; margin-top:10px;">
-                    <span class="lcd-lbl" id="lbl3">RUPIAH</span>
-                    <span class="lcd-val" style="font-size:48px;" id="val3">0</span>
-                </div>
+    <div id="edit-tx-modal" class="modal-wrap">
+        <div class="modal-box">
+            <h3>Aksi Transaksi</h3>
+            <div id="edit-tx-info" style="margin:10px 0; font-size:0.9rem;"></div>
+            <div class="form-group">
+                <label>Ubah Nominal (Rp)</label>
+                <input type="number" id="edit-val-rp">
             </div>
-        </div>
-
-        <div class="keypad-area">
-            <div class="info-bar">
-                MENU: <strong>1013</strong> (Kalibrasi) • <strong>1015</strong> (Harga) • <strong>1379</strong> (Stok)
-            </div>
-            <div class="keys-grid">
-                <button class="key" onclick="press('1')">1</button>
-                <button class="key" onclick="press('2')">2</button>
-                <button class="key" onclick="press('3')">3</button>
-                <button class="key c" onclick="press('C')">C</button>
-
-                <button class="key" onclick="press('4')">4</button>
-                <button class="key" onclick="press('5')">5</button>
-                <button class="key" onclick="press('6')">6</button>
-                <button class="key p" onclick="preset(10000)">P1</button>
-
-                <button class="key" onclick="press('7')">7</button>
-                <button class="key" onclick="press('8')">8</button>
-                <button class="key" onclick="press('9')">9</button>
-                <button class="key p" onclick="preset(20000)">P2</button>
-
-                <button class="key" style="font-size:14px;" onclick="press('.')">.</button>
-                <button class="key" onclick="press('0')">0</button>
-                <button class="key" style="font-size:14px;" onclick="press('00')">00</button>
-                <button class="key ent" onclick="process()">ENT</button>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <button class="btn-action btn-blue" onclick="saveEditedTx()">Simpan</button>
+                <button class="key" onclick="openReceiptFromEdit()">Struk</button>
+                <button class="key" style="color:red;" onclick="deleteTx()">Hapus</button>
+                <button class="key" onclick="closeModal('edit-tx-modal')">Batal</button>
             </div>
         </div>
     </div>
 
-    <div id="viewAdmin">
-        <div class="adm-head">
-            <div style="font-size:12px; color:#64748b; font-weight:600;">DASHBOARD</div>
-            <div class="adm-title">Laporan Keuangan</div>
-        </div>
-
-        <div class="card">
-            <div class="card-lbl">PROFIT BERSIH (HARI INI)</div>
-            <div class="card-val" id="admProfit">Rp 0</div>
-            <div style="font-size:11px; margin-top:5px; color:#10b981;" id="admMargin">Margin: Rp 0 / Liter</div>
-        </div>
-
-        <div class="grid-2">
-            <div class="box">
-                <div class="card-lbl">UANG MASUK</div>
-                <div style="font-size:18px; font-weight:800; margin-top:5px;" id="admOmset">Rp 0</div>
+    <div id="target-modal" class="modal-wrap">
+        <div class="modal-box">
+            <h3>Set Target Profit</h3>
+            <div class="form-group">
+                <label>Target Harian (Rp)</label>
+                <input type="number" id="set-tg-d">
             </div>
-            <div class="box" style="background:#e0f2fe;">
-                <div class="card-lbl" style="color:#0369a1;">SISA STOK</div>
-                <div style="font-size:18px; font-weight:800; color:#0284c7; margin-top:5px;" id="admStok">0 L</div>
+            <div class="form-group">
+                <label>Target Bulanan (Rp)</label>
+                <input type="number" id="set-tg-m">
             </div>
+            <button class="btn-action btn-blue" onclick="saveTarget()">Simpan Target</button>
+            <button class="key" style="margin-top:10px; width:100%;" onclick="closeModal('target-modal')">Batal</button>
         </div>
+    </div>
 
-        <div class="history-list">
-            <h4 style="margin:20px 0 10px; color:#333;">Riwayat Transaksi</h4>
-            <div id="historyList"></div>
+    <div id="stock-modal" class="modal-wrap">
+        <div class="modal-box">
+            <h3>Manajemen Stok</h3>
+            <div class="card-clean" style="text-align:center; background:#F0FDF4; box-shadow:none;">
+                <p>Sisa Fisik Sistem</p>
+                <h2 style="color:#166534;" id="modal-stk-disp">0 L</h2>
+            </div>
+            <div class="form-group">
+                <label>Isi Ulang (Liter)</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="number" id="modal-add-stk" style="margin:0;">
+                    <button class="key" style="background:#10B981; color:white;" onclick="addStkModal()">+</button>
+                </div>
+            </div>
+            <div class="form-group" style="margin-top:20px; padding-top:10px; border-top:1px dashed #ccc;">
+                <label style="color:#EF4444;">Audit Selisih (Opname)</label>
+                <p style="font-size:0.75rem; color:grey;">Masukkan sisa stok hasil ukur manual:</p>
+                <div style="display:flex; gap:10px;">
+                    <input type="number" id="modal-opname" style="margin:0;" placeholder="Hasil Ukur">
+                    <button class="key" style="background:#EF4444; color:white;" onclick="checkOpname()">Cek</button>
+                </div>
+            </div>
+            <button class="key" style="margin-top:15px; width:100%;" onclick="closeModal('stock-modal')">Tutup</button>
         </div>
+    </div>
+
+    <div id="analytics-modal" class="modal-wrap">
+        <div class="modal-box" style="width:100%; max-width:400px;">
+            <h3>Analisa Detail</h3>
+            <div style="overflow-y:auto; max-height:70vh;">
+                <div class="card-clean" style="padding:15px; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between;"><b>Cuaca Hari Ini</b> <span style="font-size:0.7rem; background:#eee; padding:3px 6px; border-radius:4px;">Simulasi</span></div>
+                    <div style="display:flex; gap:5px; margin-top:5px;">
+                        <button class="key" style="font-size:0.7rem;" onclick="setWeather('Cerah')">☀️ Cerah</button>
+                        <button class="key" style="font-size:0.7rem;" onclick="setWeather('Hujan')">🌧️ Hujan</button>
+                    </div>
+                    <p id="weather-info" style="font-size:0.75rem; margin-top:5px; color:#666;">--</p>
+                </div>
+                
+                <div class="card-clean" style="padding:15px; margin-bottom:10px;">
+                    <p style="font-size:0.8rem; font-weight:bold;">Grafik Jam Ramai (24h)</p>
+                    <canvas id="chart-hours" height="150"></canvas>
+                </div>
+
+                <div class="card-clean" style="padding:15px;">
+                    <p style="font-size:0.8rem; font-weight:bold; margin-bottom:10px;">Perbandingan Harian</p>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <span style="font-size:0.8rem;">Kemarin</span>
+                        <b id="ana-yest">Rp 0</b>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <span style="font-size:0.8rem;">Hari Ini</span>
+                        <b id="ana-today">Rp 0</b>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; border-top:1px solid #eee; padding-top:5px;">
+                        <span style="font-size:0.8rem;">Pertumbuhan</span>
+                        <b id="ana-growth" style="color:grey;">0%</b>
+                    </div>
+                </div>
+            </div>
+            <button class="key" style="width:100%; margin-top:10px;" onclick="closeModal('analytics-modal')">Tutup</button>
+        </div>
+    </div>
+
+    <div id="receipt-modal" class="modal-wrap">
+        <div class="modal-box">
+            <div id="print-area" style="font-family:'Courier New'; font-size:12px; text-align:center; padding:15px; background:#fff; border:1px dashed #999;">
+                <b id="r-nm">TOKO</b><br><span id="r-ad">Addr</span><hr style="border-top:1px dashed #000; margin:10px 0;">
+                <div style="display:flex;justify-content:space-between"><span>Tgl:</span><span id="r-dt"></span></div>
+                <div style="display:flex;justify-content:space-between"><span>Jam:</span><span id="r-time"></span></div>
+                <div style="display:flex;justify-content:space-between"><span>Pom:</span><span>1</span></div><hr style="border-top:1px dashed #000;margin:10px 0;">
+                <div style="display:flex;justify-content:space-between"><span>Liter:</span><span id="r-lt"></span></div>
+                <div style="display:flex;justify-content:space-between"><span>Harga:</span><span id="r-pr"></span></div>
+                <div style="display:flex;justify-content:space-between;font-weight:bold;font-size:1.2em;margin-top:5px;"><span>TOTAL:</span><span id="r-tt"></span></div><hr style="border-top:1px dashed #000;margin:10px 0;">
+                <i id="r-ms">Thanks</i>
+            </div>
+            <br><div style="display:flex; gap:10px;"><button class="key" style="flex:1" onclick="document.getElementById('receipt-modal').style.display='none'">Tutup</button><button class="key" style="flex:1;background:var(--primary);color:white;" onclick="dlR()">Simpan</button></div>
+        </div>
+    </div>
+
+    <div id="pdf-template" style="padding:40px; background:white; color:black; font-family:sans-serif;">
+        <h2 style="text-align:center; margin:0;" id="p-st">TOKO</h2>
+        <h4 style="text-align:center; margin:5px 0 30px 0;">LAPORAN BULANAN (18-17)</h4>
+        <table style="width:100%; border-collapse:collapse; font-size:12px;" border="1">
+            <thead><tr style="background:#eee;"><th>Minggu</th><th>Masuk</th><th>Keluar</th><th>HPP</th><th>Liter</th><th>Net</th></tr></thead>
+            <tbody id="p-bd"></tbody>
+        </table>
     </div>
 
     <script>
-        // --- DEFINISI VARIABEL DI AWAL (PENTING AGAR TIDAK ERROR) ---
-        let screenInput = "";
-        let activeMenu = null; // null = standby, 'stock', 'price', 'pulse', 'modal'
-        let db = {
-            price: 10000,
-            modal: 9000,
-            stock: 0,
-            pulse: 360,
-            trans: []
-        };
+        // --- DATA & STATE ---
+        let db={nm:"Juragan Pom",ad:"Indonesia",msg:"Terimakasih",pr:12000,hp:10000,st:0,cl:360,tgD:170000,tgM:5000000,tx:[],ex:[],weatherLogs:[]};
+        let run={on:0,tm:null,pl:0,lt:0,rp:0,tg:0};
+        let tempTxId = null; // For editing
+        let chartHours = null;
 
-        // --- FIREBASE SETUP ---
-        const firebaseConfig = { 
-            apiKey: "AIzaSyBpwNPIYhelOhkPvJsBmKvlZnaH9FVnmM4", 
-            authDomain: "pom-mini-50b1e.firebaseapp.com", 
-            projectId: "pom-mini-50b1e", 
-            storageBucket: "pom-mini-50b1e.firebasestorage.app", 
-            messagingSenderId: "77499696502", 
-            appId: "1:77499696502:web:8080c37da62a12c9566657", 
-            measurementId: "G-KRRHTTGBRF" 
-        };
-        
-        let dbFirestore;
-        try {
-            firebase.initializeApp(firebaseConfig);
-            dbFirestore = firebase.firestore();
-            dbFirestore.settings({ experimentalForceLongPolling: true, merge: true });
-        } catch(e) { console.log("Offline"); document.getElementById('connDot').classList.add('offline'); }
-
-        // --- SYSTEM INIT ---
-        function init() {
-            let saved = localStorage.getItem('dl_v11_pro');
-            if(saved) db = { ...db, ...JSON.parse(saved) };
-            updateDisplay();
-
-            if(dbFirestore) {
-                const docRef = dbFirestore.collection("data_toko").doc("config_v11");
-                docRef.onSnapshot((doc) => {
-                    if (doc.exists) {
-                        db = { ...db, ...doc.data() };
-                        localStorage.setItem('dl_v11_pro', JSON.stringify(db)); 
-                        updateDisplay();
-                        if(document.getElementById('viewAdmin').style.display === 'block') renderAdmin();
-                    }
-                });
-            }
+        window.onload=()=>{
+            setTimeout(()=>{document.getElementById('splash').style.opacity=0;setTimeout(()=>document.getElementById('splash').style.display='none',500)},1000);
+            load(); render();
         }
-        
+
         // --- NAVIGATION ---
-        function switchMode() {
-            let mesin = document.getElementById('viewMesin');
-            let admin = document.getElementById('viewAdmin');
-            let btn = document.getElementById('btnText');
-
-            if(mesin.style.display !== 'none') {
-                mesin.style.display = 'none';
-                admin.style.display = 'block';
-                btn.innerText = "MESIN";
-                renderAdmin();
+        function nav(id, el){
+            document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(el){
+                document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+                el.classList.add('active');
             } else {
-                mesin.style.display = 'flex';
-                admin.style.display = 'none';
-                btn.innerText = "ADMIN";
-                updateDisplay();
+                let ids=['home','pom','expenses','report','settings'];
+                document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+                if(ids.indexOf(id)>-1) document.querySelectorAll('.nav-item')[ids.indexOf(id)].classList.add('active');
+            }
+            document.getElementById('header').style.display = (id==='home') ? 'flex' : 'none';
+            if(id==='report') renTx('today', 'tx-list');
+        }
+
+        function openModal(id){ document.getElementById(id).style.display='flex'; if(id==='stock-modal') document.getElementById('modal-stk-disp').innerText=db.st.toFixed(2)+" L"; }
+        function closeModal(id){ document.getElementById(id).style.display='none'; }
+
+        // --- POM ENGINE ---
+        function setP(v){ if(run.on)return; reset(); run.tg=(v==='FULL')?Infinity:v; document.getElementById('manual').value=(v==='FULL')?'':v; }
+        function setM(v){ if(run.on)return; run.tg=parseFloat(v)||0; reset(false); }
+        function reset(c=true){ if(run.on)return; run.pl=0;run.lt=0;run.rp=0; if(c){run.tg=0;document.getElementById('manual').value='';} upLCD(); }
+        
+        function togglePump(){
+            let btn=document.getElementById('btn-start');
+            if(!run.on){
+                if(db.st<=0)return alert("Stok Habis!");
+                if(run.tg===0)return alert("Set Nominal!");
+                run.on=1; btn.innerText="STOP"; btn.classList.add('btn-red');
+                document.getElementById('manual').disabled=true;
+                
+                run.tm=setInterval(()=>{
+                    run.pl+=40; 
+                    run.lt=run.pl/db.cl; run.rp=run.lt*db.pr;
+                    let real=run.pl/400; // Fisik 400
+                    if(run.tg!==Infinity && run.rp>=run.tg){ run.rp=run.tg; run.lt=run.rp/db.pr; stop(); }
+                    else if(real>=db.st){ stop(); alert("Stok Habis!"); }
+                    else upLCD();
+                },50);
+            } else stop();
+        }
+        function stop(){
+            clearInterval(run.tm); run.on=0; upLCD();
+            let btn=document.getElementById('btn-start'); btn.innerText="MULAI ISI"; btn.classList.remove('btn-red');
+            document.getElementById('manual').disabled=false;
+            if(run.rp>100){
+                let realL=(run.lt*db.cl)/400; db.st-=realL;
+                let prof=run.rp-(realL*db.hp); // Logic Cuan 3000
+                let tx={id:Date.now(),d:new Date().toISOString(),l:run.lt,t:run.rp,p:prof};
+                db.tx.unshift(tx); save(); render(); openReceipt(tx);
+            }
+        }
+        function upLCD(){
+            document.getElementById('lcd-lit').innerText=run.lt.toFixed(2);
+            document.getElementById('lcd-rp').innerText=Math.floor(run.rp).toLocaleString();
+        }
+
+        // --- RENDER & LOGIC ---
+        function render(){
+            let d=new Date().toDateString();
+            let tx=db.tx.filter(x=>new Date(x.d).toDateString()===d);
+            let ex=db.ex.filter(x=>new Date(x.d).toDateString()===d);
+            let omz=tx.reduce((a,b)=>a+b.t,0), pro=tx.reduce((a,b)=>a+b.p,0);
+            let out=ex.reduce((a,b)=>a+b.a,0), lit=tx.reduce((a,b)=>a+b.l,0);
+
+            // Dash
+            document.getElementById('dash-profit').innerText="Rp "+pro.toLocaleString(); // Profit di kartu
+            document.getElementById('dash-omzet').innerText="Rp "+omz.toLocaleString();
+            document.getElementById('dash-exp').innerText="Rp "+out.toLocaleString();
+            document.getElementById('dash-lit').innerText=lit.toFixed(2)+" L";
+            
+            // TARGET LOGIC
+            // Harian
+            let pctD = (pro / db.tgD) * 100; if(pctD>100)pctD=100;
+            document.getElementById('tg-d-val').innerText = (db.tgD/1000).toFixed(0)+"k";
+            document.getElementById('tg-d-pct').innerText = pctD.toFixed(0) + "%";
+            document.getElementById('bar-day').style.width = pctD + "%";
+            
+            // Bulanan (Fiscal)
+            let fiscalTx = db.tx.filter(x=>isFiscal(x.d));
+            let monthProf = fiscalTx.reduce((a,b)=>a+b.p,0);
+            let pctM = (monthProf / db.tgM) * 100; if(pctM>100)pctM=100;
+            document.getElementById('tg-m-val').innerText = (db.tgM/1000000).toFixed(1)+"jt";
+            document.getElementById('tg-m-pct').innerText = pctM.toFixed(0) + "%";
+            document.getElementById('bar-month').style.width = pctM + "%";
+
+            // Settings Fields
+            document.getElementById('disp-store').innerText=db.nm;
+            document.getElementById('head-ava').src=localStorage.getItem('pomAva')||'https://via.placeholder.com/100';
+            document.getElementById('lcd-prc').innerText=db.pr.toLocaleString();
+            
+            document.getElementById('set-name').value=db.nm; document.getElementById('set-addr').value=db.ad;
+            document.getElementById('set-msg').value=db.msg; document.getElementById('set-prc').value=db.pr;
+            document.getElementById('set-hpp').value=db.hp; document.getElementById('set-cal').value=db.cl;
+            document.getElementById('set-tg-d').value=db.tgD; document.getElementById('set-tg-m').value=db.tgM;
+
+            renEx(); 
+        }
+
+        // --- FEATURE 1: EDITABLE HISTORY ---
+        function openHistoryModal() {
+            openModal('history-modal');
+            let container = document.getElementById('history-list-content');
+            container.innerHTML = '';
+            // Render all tx limited to 50
+            db.tx.slice(0, 50).forEach(x => {
+                let div = document.createElement('div');
+                div.className = 'tx-item';
+                div.onclick = () => openEditTx(x);
+                div.innerHTML = `
+                    <div class="tx-left"><div class="tx-icon-sm"><i class="fas fa-edit"></i></div>
+                    <div class="tx-details"><h4>Rp ${x.t.toLocaleString()}</h4><p>${new Date(x.d).toLocaleString()}</p></div></div>
+                    <span class="tx-amount">${x.l.toFixed(2)} L</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function openEditTx(tx) {
+            tempTxId = tx.id;
+            document.getElementById('edit-tx-info').innerText = `Waktu: ${new Date(tx.d).toLocaleString()}\nLiter: ${tx.l.toFixed(2)} L\nTotal: Rp ${tx.t.toLocaleString()}`;
+            document.getElementById('edit-val-rp').value = tx.t;
+            openModal('edit-tx-modal');
+        }
+
+        function saveEditedTx() {
+            let newRp = parseFloat(document.getElementById('edit-val-rp').value);
+            if (!newRp) return;
+            
+            let idx = db.tx.findIndex(x => x.id === tempTxId);
+            if (idx > -1) {
+                let oldTx = db.tx[idx];
+                
+                // Logic: Refund Stock old -> Deduct Stock new
+                let oldRealL = (oldTx.l * db.cl)/400;
+                db.st += oldRealL; // Kembalikan stok lama
+                
+                let newLit = newRp / db.pr;
+                let newRealL = (newLit * db.cl)/400;
+                db.st -= newRealL; // Kurangi stok baru
+                
+                let newProf = newRp - (newRealL * db.hp);
+                
+                db.tx[idx].t = newRp;
+                db.tx[idx].l = newLit;
+                db.tx[idx].p = newProf;
+                
+                save(); render(); openHistoryModal(); closeModal('edit-tx-modal');
             }
         }
 
-        // --- MESIN LOGIC (CORE) ---
-        function press(key) {
-            // Jika pencet C, reset input
-            if(key === 'C') {
-                if(activeMenu) closeMenu(); // Keluar menu
-                else { screenInput = ""; updateDisplay(); } // Reset layar biasa
-                return;
-            }
-
-            // Batasi panjang input
-            if(screenInput.length < 8) {
-                if(activeMenu && (key === '.' || key === '00')) return; // Menu cuma terima angka bulat
-                screenInput += key;
-                
-                // Update tampilan angka
-                if(activeMenu) {
-                    document.getElementById('val3').innerText = screenInput;
-                } else {
-                    document.getElementById('val3').innerText = screenInput;
+        function deleteTx() {
+            if(confirm("Hapus transaksi ini? Stok akan dikembalikan.")){
+                let idx = db.tx.findIndex(x => x.id === tempTxId);
+                if (idx > -1) {
+                    let oldTx = db.tx[idx];
+                    let oldRealL = (oldTx.l * db.cl)/400;
+                    db.st += oldRealL;
+                    
+                    db.tx.splice(idx, 1);
+                    save(); render(); openHistoryModal(); closeModal('edit-tx-modal');
                 }
             }
         }
+        
+        function openReceiptFromEdit() {
+            let tx = db.tx.find(x => x.id === tempTxId);
+            if(tx) { closeModal('edit-tx-modal'); closeModal('history-modal'); openReceipt(tx); }
+        }
 
-        function preset(val) {
-            if(!activeMenu) {
-                screenInput = val.toString();
-                document.getElementById('val3').innerText = screenInput;
+        // --- FEATURE 2: TARGETS ---
+        function saveTarget() {
+            db.tgD = parseFloat(document.getElementById('set-tg-d').value) || 170000;
+            db.tgM = parseFloat(document.getElementById('set-tg-m').value) || 5000000;
+            save(); render(); closeModal('target-modal');
+        }
+
+        // --- FEATURE 3: STOCK & OPNAME ---
+        function addStkModal() {
+            let v = parseFloat(document.getElementById('modal-add-stk').value);
+            if(v) { db.st += v; document.getElementById('modal-add-stk').value=''; save(); render(); document.getElementById('modal-stk-disp').innerText=db.st.toFixed(2)+" L"; }
+        }
+        function checkOpname() {
+            let physical = parseFloat(document.getElementById('modal-opname').value);
+            if(!isNaN(physical)) {
+                let diff = physical - db.st;
+                alert(`Sistem: ${db.st.toFixed(2)} L\nFisik: ${physical.toFixed(2)} L\nSelisih: ${diff.toFixed(2)} L\n\nJika minus (-), berarti ada kebocoran/penguapan/takaran kelebihan.`);
             }
         }
 
-        function process() {
-            // 1. JIKA SEDANG DI MENU (Simpan Setting)
-            if(activeMenu) {
-                let val = parseFloat(screenInput);
-                if(isNaN(val)) return;
-                
-                if(activeMenu === 'pulse') db.pulse = val;
-                else if(activeMenu === 'price') db.price = val;
-                else if(activeMenu === 'modal') db.modal = val;
-                else if(activeMenu === 'stock') db.stock = val;
-
-                save(); 
-                alert("TERSIMPAN: " + val);
-                closeMenu(); 
-                return;
-            }
-
-            // 2. DETEKSI KODE RAHASIA
-            if(screenInput === "1013") { openMenu('pulse', "SET PULSE"); return; }
-            if(screenInput === "1015") { openMenu('price', "SET HARGA JUAL"); return; }
-            if(screenInput === "1000") { openMenu('modal', "SET HARGA KULAKAN"); return; }
-            if(screenInput === "1379") { openMenu('stock', "ISI STOK (LITER)"); return; }
-
-            // 3. PROSES JUALAN
-            let nom = parseInt(screenInput);
-            if(!nom) return;
-
-            let literLayar = nom / db.price;
-            let literFisik = literLayar * (db.pulse / 400); // Rumus Inti 360
-
-            if(db.stock < literFisik) {
-                alert("STOK HABIS! Sisa: " + db.stock.toFixed(2) + " L\nSilakan Kode 1379 untuk isi.");
-                screenInput = ""; updateDisplay(); return;
-            }
-
-            // Eksekusi
-            db.stock -= literFisik;
+        // --- FEATURE 4: ANALYTICS (MODAL) ---
+        function openAnalytics() {
+            openModal('analytics-modal');
+            renderChartHours();
             
+            // Compare Yesterday vs Today
+            let today = new Date().toDateString();
+            let yest = new Date(); yest.setDate(yest.getDate() - 1); let yestStr = yest.toDateString();
+            
+            let txToday = db.tx.filter(x => new Date(x.d).toDateString() === today).reduce((a,b)=>a+b.t, 0);
+            let txYest = db.tx.filter(x => new Date(x.d).toDateString() === yestStr).reduce((a,b)=>a+b.t, 0);
+            
+            document.getElementById('ana-today').innerText = "Rp " + txToday.toLocaleString();
+            document.getElementById('ana-yest').innerText = "Rp " + txYest.toLocaleString();
+            
+            let growth = 0;
+            if(txYest > 0) growth = ((txToday - txYest) / txYest) * 100;
+            else if(txToday > 0) growth = 100;
+            
+            let el = document.getElementById('ana-growth');
+            el.innerText = (growth > 0 ? "+" : "") + growth.toFixed(1) + "%";
+            el.style.color = growth >= 0 ? "green" : "red";
+        }
+
+        function setWeather(w) {
+            document.getElementById('weather-info').innerText = "Tercatat: " + w;
+            // In real app, save to DB
+        }
+
+        function renderChartHours() {
+            if(chartHours) chartHours.destroy();
+            let hours = Array(24).fill(0);
+            db.tx.forEach(x => {
+                let h = new Date(x.d).getHours();
+                hours[h] += x.t;
+            });
+            
+            let ctx = document.getElementById('chart-hours').getContext('2d');
+            chartHours = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length:24}, (_,i)=>i),
+                    datasets: [{ label: 'Omzet', data: hours, backgroundColor: '#4361EE' }]
+                },
+                options: { responsive:true, plugins:{legend:{display:false}}, maintainAspectRatio: false }
+            });
+        }
+
+        // --- EXPENSES & OTHERS ---
+        function addEx(){
+            let n=document.getElementById('ex-n').value, a=parseFloat(document.getElementById('ex-a').value);
+            if(n&&a){ db.ex.unshift({d:new Date().toISOString(),n:n,a:a}); document.getElementById('ex-n').value='';document.getElementById('ex-a').value=''; save(); render(); }
+        }
+        function renEx(){
+            let h=''; db.ex.slice(0,5).forEach(x=>{
+                h+=`<div class="tx-item"><div class="tx-left"><div class="tx-icon-sm" style="color:#EF4444"><i class="fas fa-arrow-down"></i></div><div class="tx-details"><h4>${x.n}</h4><p>${new Date(x.d).toLocaleDateString()}</p></div></div><div class="tx-amount neg">- ${x.a.toLocaleString()}</div></div>`
+            }); document.getElementById('ex-list').innerHTML=h;
+        }
+
+        // --- REPORT LOGIC (18-17) ---
+        function isFiscal(dateString) {
+            let d = new Date(dateString);
             let now = new Date();
-            db.trans.unshift({
-                date: now.toLocaleDateString(),
-                time: now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}),
-                nominal: nom,
-                l_layar: literLayar,
-                l_fisik: literFisik
-            });
-            if(db.trans.length > 50) db.trans.pop();
-
-            save();
-            
-            // Animasi Loading
-            screenInput = "";
-            document.getElementById('val3').innerText = "PROSES...";
-            setTimeout(() => {
-                document.getElementById('val3').innerText = nom;
-                document.getElementById('val2').innerText = literLayar.toFixed(2);
-            }, 500);
-        }
-
-        // --- MENU SYSTEM (LCD OVERRIDE) ---
-        function openMenu(type, title) {
-            activeMenu = type;
-            screenInput = "";
-            
-            // Ubah Tampilan LCD jadi Mode Menu (Kuning)
-            document.getElementById('lcdPanel').classList.add('menu-mode');
-            
-            document.getElementById('lbl1').innerText = "MODE MENU";
-            document.getElementById('val1').innerText = "--------";
-            
-            document.getElementById('lbl2').innerText = title;
-            document.getElementById('val2').innerText = "INPUT:";
-            
-            document.getElementById('lbl3').innerText = "NILAI BARU";
-            document.getElementById('val3').innerText = "_";
-        }
-
-        function closeMenu() {
-            activeMenu = null;
-            screenInput = "";
-            document.getElementById('lcdPanel').classList.remove('menu-mode');
-            updateDisplay();
-        }
-
-        function updateDisplay() {
-            // Kembalikan teks LCD ke normal
-            document.getElementById('lbl1').innerText = "HARGA";
-            document.getElementById('val1').innerText = db.price;
-            
-            document.getElementById('lbl2').innerText = "LITER";
-            
-            document.getElementById('lbl3').innerText = "RUPIAH";
-            
-            if(!screenInput) {
-                document.getElementById('val2').innerText = "0.00";
-                document.getElementById('val3').innerText = "0";
+            let start, end;
+            if(now.getDate() >= 18) {
+                start = new Date(now.getFullYear(), now.getMonth(), 18);
+                end = new Date(now.getFullYear(), now.getMonth()+1, 17, 23, 59, 59);
+            } else {
+                start = new Date(now.getFullYear(), now.getMonth()-1, 18);
+                end = new Date(now.getFullYear(), now.getMonth(), 17, 23, 59, 59);
             }
+            return d >= start && d <= end;
         }
 
-        // --- ADMIN RENDER ---
-        function renderAdmin() {
-            let today = new Date().toLocaleDateString();
-            let dInc = 0, dLitFisik = 0;
-
-            db.trans.forEach(t => {
-                if(t.date === today) {
-                    dInc += t.nominal;
-                    dLitFisik += t.l_fisik;
-                }
-            });
-
-            let hpp = dLitFisik * db.modal;
-            let profit = dInc - hpp;
-            let margin = db.price - db.modal;
-            const fmt = (n) => "Rp " + parseInt(n).toLocaleString('id-ID');
-
-            document.getElementById('admProfit').innerText = fmt(profit);
-            document.getElementById('admMargin').innerText = `Margin: ${fmt(margin)}/L (Modal ${fmt(db.modal)})`;
-            document.getElementById('admOmset').innerText = fmt(dInc);
-            document.getElementById('admStok').innerText = db.stock.toFixed(2) + " L";
-
-            document.getElementById('historyList').innerHTML = db.trans.slice(0,10).map(t => `
-                <div class="h-item">
-                    <div>
-                        <strong style="font-size:14px;">${t.time}</strong><br>
-                        <span style="color:#64748b">Layar: ${t.l_layar.toFixed(2)}L</span>
-                    </div>
-                    <div style="text-align:right;">
-                        <strong style="color:#10b981; font-size:14px;">+${fmt(t.nominal)}</strong><br>
-                        <span style="color:#dc2626; font-size:10px;">Fisik: ${t.l_fisik.toFixed(3)}L</span>
-                    </div>
-                </div>
-            `).join('');
+        function renTx(f, elId){
+            let d=db.tx, n=new Date();
+            if(f==='today')d=d.filter(x=>new Date(x.d).toDateString()===n.toDateString());
+            if(f==='week')d=d.filter(x=>new Date(x.d)>new Date(n-604800000));
+            if(f==='month') d=d.filter(x=>isFiscal(x.d));
+            
+            let h=''; d.slice(0,30).forEach(x=>{
+                h+=`<div class="tx-item" style="margin-bottom:10px" onclick='openReceipt(${JSON.stringify(x)})'>
+                    <div class="tx-left"><div class="tx-icon-sm"><i class="fas fa-gas-pump"></i></div>
+                    <div class="tx-details"><h4>${x.l.toFixed(2)} L</h4><p>${new Date(x.d).toLocaleTimeString()}</p></div></div>
+                    <div class="tx-amount pos">+ ${x.t.toLocaleString()}</div></div>`
+            }); document.getElementById(elId || 'tx-list').innerHTML=h;
         }
 
-        // --- SAVE DATA ---
-        function save() {
-            localStorage.setItem('dl_v11_pro', JSON.stringify(db));
-            if(dbFirestore) {
-                dbFirestore.collection("data_toko").doc("config_v11").set(db).catch(console.error);
-            }
+        function genPDF(){
+            document.getElementById('p-st').innerText=db.nm;
+            let fiscalTx = db.tx.filter(x=>isFiscal(x.d));
+            let fiscalEx = db.ex.filter(x=>isFiscal(x.d));
+            let w=[{i:0,e:0,h:0,l:0},{i:0,e:0,h:0,l:0},{i:0,e:0,h:0,l:0},{i:0,e:0,h:0,l:0}];
+            fiscalTx.forEach((x, idx) => { let bucket = idx % 4; w[bucket].i += x.t; let realL = (x.l * db.cl)/400; w[bucket].h += (realL * db.hp); w[bucket].l += x.l; });
+            fiscalEx.forEach((x, idx) => { let bucket = idx % 4; w[bucket].e += x.a; });
+            let h=''; w.forEach((x,i)=>{ h+=`<tr><td>Mg ${i+1}</td><td>${x.i.toLocaleString()}</td><td>${x.e.toLocaleString()}</td><td>${x.h.toLocaleString()}</td><td>${x.l.toFixed(1)}</td><td><b>${(x.i-x.h-x.e).toLocaleString()}</b></td></tr>`});
+            document.getElementById('p-bd').innerHTML=h;
+            let e=document.getElementById('pdf-template'); e.style.display='block';
+            html2pdf().set({margin:0.5,filename:'Laporan.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'in',format:'a4'}}).from(e).save().then(()=>{e.style.display='none'});
         }
 
-        // Jalankan Init Terakhir
-        init();
+        // --- UTILS ---
+        function addStkFunc(){ let v=parseFloat(document.getElementById('add-stk').value); if(v){db.st+=v;document.getElementById('add-stk').value='';save();render();} }
+        function saveSet(){ 
+            db.nm=document.getElementById('set-name').value; db.ad=document.getElementById('set-addr').value;
+            db.msg=document.getElementById('set-msg').value; db.pr=parseFloat(document.getElementById('set-prc').value);
+            db.hp=parseFloat(document.getElementById('set-hpp').value); db.cl=parseFloat(document.getElementById('set-cal').value);
+            save(); render();
+        }
+        function upProfile(i){ let f=i.files[0];if(f){let r=new FileReader();r.onload=e=>{localStorage.setItem('pomAva',e.target.result);render()};r.readAsDataURL(f)} }
+        function openReceipt(x){
+            let d=new Date(x.d); document.getElementById('receipt-modal').style.display='flex';
+            document.getElementById('r-nm').innerText=db.nm; document.getElementById('r-ad').innerText=db.ad;
+            document.getElementById('r-dt').innerText=d.toLocaleDateString(); document.getElementById('r-time').innerText=d.toLocaleTimeString();
+            document.getElementById('r-lt').innerText=x.l.toFixed(2)+" L"; document.getElementById('r-pr').innerText=db.pr.toLocaleString();
+            document.getElementById('r-tt').innerText="Rp "+Math.floor(x.t).toLocaleString(); document.getElementById('r-ms').innerText=db.msg;
+        }
+        function closeReceipt(){ document.getElementById('receipt-modal').style.display='none'; }
+        function dlR(){ html2canvas(document.getElementById('print-area'), {scale:2, useCORS:true}).then(c=>{let l=document.createElement('a');l.download='Struk.jpg';l.href=c.toDataURL();l.click()}) }
+        function bkp(){ let a=document.createElement('a');a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(db));a.download="backup.json";a.click() }
+        function rst(i){ let r=new FileReader();r.onload=e=>{db=JSON.parse(e.target.result);save();location.reload()};r.readAsText(i.files[0]) }
+        function rstAll(){ if(confirm("Reset?")) {localStorage.clear();location.reload()} }
 
+        // --- STORAGE ---
+        function save(){ localStorage.setItem('pomProAnalyst',JSON.stringify(db)) }
+        function load(){ let d=localStorage.getItem('pomProAnalyst'); if(d) db={...db,...JSON.parse(d)}; }
     </script>
 </body>
 </html>
